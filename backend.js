@@ -36,11 +36,11 @@ app.get('/', (req, res) => {
 });
 
 // ================================================
-// CONFIGURAÇÕES
+// CONFIGURACOES
 // ================================================
 app.post('/api/config', (req, res) => {
     userPreferences = { ...userPreferences, ...req.body };
-    console.log('✅ Config atualizada:', userPreferences);
+    console.log('Config atualizada:', userPreferences);
     res.json({ success: true });
 });
 
@@ -49,15 +49,15 @@ app.get('/api/config', (req, res) => {
 });
 
 // ================================================
-// RECEBER NOTIFICAÇÃO REAL DO MACRODROID
+// RECEBER NOTIFICACAO REAL DO MACRODROID
 // ================================================
 app.post('/api/notification', (req, res) => {
     const { platform, title, text, packageName, timestamp } = req.body;
 
-    console.log(`📱 NOTIFICAÇÃO REAL RECEBIDA!`);
-    console.log(`   Package: ${packageName || platform}`);
-    console.log(`   Título:  ${title}`);
-    console.log(`   Texto:   ${text}`);
+    console.log('NOTIFICACAO REAL RECEBIDA!');
+    console.log('Package: ' + (packageName || platform));
+    console.log('Titulo: ' + title);
+    console.log('Texto: ' + text);
 
     // Detectar plataforma pelo package name
     const packageMap = {
@@ -74,19 +74,19 @@ app.post('/api/notification', (req, res) => {
         detectedPlatform = packageMap[packageName];
         if (!detectedPlatform) {
             const pkg = packageName.toLowerCase();
-            if (pkg.includes('ifood'))       detectedPlatform = 'ifood';
-            else if (pkg.includes('uber'))   detectedPlatform = 'ubereats';
-            else if (pkg.includes('keeta'))  detectedPlatform = 'keeta';
-            else if (pkg.includes('loggi'))  detectedPlatform = 'loggi';
-            else                             detectedPlatform = 'ifood';
+            if (pkg.indexOf('ifood') >= 0)       detectedPlatform = 'ifood';
+            else if (pkg.indexOf('uber') >= 0)   detectedPlatform = 'ubereats';
+            else if (pkg.indexOf('keeta') >= 0)  detectedPlatform = 'keeta';
+            else if (pkg.indexOf('loggi') >= 0)  detectedPlatform = 'loggi';
+            else                                 detectedPlatform = 'ifood';
         }
     }
 
     if (!detectedPlatform) {
-        return res.json({ success: false, reason: 'Plataforma não detectada' });
+        return res.json({ success: false, reason: 'Plataforma nao detectada' });
     }
 
-    const fullText = `${title || ''} ${text || ''}`;
+    const fullText = (title || '') + ' ' + (text || '');
 
     // Extrair valor R$
     const moneyMatch = fullText.match(/R\$\s*(\d+[,.]?\d*)/i);
@@ -94,48 +94,39 @@ app.post('/api/notification', (req, res) => {
         ? parseFloat(moneyMatch[1].replace(',', '.'))
         : null;
 
-    // Extrair distância km
+    // Extrair distancia km
     const distMatch = fullText.match(/(\d+[,.]?\d*)\s*km/i);
     const distance = distMatch
         ? parseFloat(distMatch[1].replace(',', '.'))
         : (Math.random() * 4 + 0.5).toFixed(1);
 
-    // Verificar ganho mínimo
+    // Verificar ganho minimo
     if (earnings !== null && earnings < (userPreferences.ganhoMinimo || 0)) {
-        console.log(`⏭️ Ignorado: R$${earnings} abaixo do mínimo R$${userPreferences.ganhoMinimo}`);
-        return res.json({ success: false, reason: 'Abaixo do ganho mínimo' });
+        console.log('Ignorado: R$' + earnings + ' abaixo do minimo R$' + userPreferences.ganhoMinimo);
+        return res.json({ success: false, reason: 'Abaixo do ganho minimo' });
     }
 
-    // Extrair destino
-    const destPatterns = [
-        /(?:para|em|até|entregar em|destino:?)\s+([A-Za-zÀ-ú\s,]+?)(?:\s*[-–]|\s*\d|
-$
-)/i,
-    ];
-    let destination = null;
-    for (const pat of destPatterns) {
-        const m = fullText.match(pat);
-        if (m) { destination = m[1].trim(); break; }
-    }
-    if (!destination) {
-        destination = text
-            ? text.substring(0, 50).trim()
-            : title?.substring(0, 50).trim() || 'Destino não informado';
+    // Extrair destino de forma simples (sem regex complexa)
+    let destination = 'Destino nao informado';
+    if (text && text.length > 0) {
+        destination = text.substring(0, 60).trim();
+    } else if (title && title.length > 0) {
+        destination = title.substring(0, 60).trim();
     }
 
-    // Gerar posição próxima ao usuário
+    // Gerar posicao proxima ao usuario
     const spread = (userPreferences.raioMaximo || 5) / 111 / 2;
     const lat = (userPreferences.latitude  || -23.6821) + (Math.random() - 0.5) * spread;
     const lng = (userPreferences.longitude || -46.5650) + (Math.random() - 0.5) * spread;
 
     const newRide = {
-        id:          `${detectedPlatform}-real-${Date.now()}`,
+        id:          detectedPlatform + '-real-' + Date.now(),
         platform:    detectedPlatform,
-        lat,
-        lng,
+        lat:         lat,
+        lng:         lng,
         distance:    parseFloat(distance).toFixed(1),
         earnings:    (earnings || 20).toFixed(2),
-        destination,
+        destination: destination,
         timestamp:   timestamp || new Date(),
         status:      'pending',
         source:      'real',
@@ -145,7 +136,7 @@ $
 
     if (activePlatforms[detectedPlatform]) {
         activePlatforms[detectedPlatform].rides.push(newRide);
-        console.log(`✅ Corrida REAL: ${detectedPlatform} R$${newRide.earnings} → ${destination}`);
+        console.log('Corrida REAL: ' + detectedPlatform + ' R$' + newRide.earnings);
         res.json({ success: true, ride: newRide });
     } else {
         res.json({ success: false, reason: 'Plataforma desabilitada' });
@@ -153,20 +144,20 @@ $
 });
 
 // ================================================
-// CORRIDAS — GET
+// CORRIDAS GET
 // ================================================
 app.get('/api/rides', (req, res) => {
     const allRides = [];
-    Object.keys(activePlatforms).forEach(platform => {
+    Object.keys(activePlatforms).forEach(function(platform) {
         if (activePlatforms[platform].enabled) {
-            activePlatforms[platform].rides.forEach(ride => {
-                allRides.push({ ...ride, platform });
+            activePlatforms[platform].rides.forEach(function(ride) {
+                allRides.push(Object.assign({}, ride, { platform: platform }));
             });
         }
     });
 
     // Reais primeiro, depois por ganho
-    allRides.sort((a, b) => {
+    allRides.sort(function(a, b) {
         if (a.source === 'real' && b.source !== 'real') return -1;
         if (b.source === 'real' && a.source !== 'real') return  1;
         return parseFloat(b.earnings) - parseFloat(a.earnings);
@@ -182,30 +173,36 @@ app.post('/api/accept-ride', (req, res) => {
     const { rideId, platform } = req.body;
 
     if (!activePlatforms[platform]) {
-        return res.json({ success: false, message: 'Plataforma inválida' });
+        return res.json({ success: false, message: 'Plataforma invalida' });
     }
 
-    const ride = activePlatforms[platform].rides.find(r => r.id === rideId);
+    let ride = null;
+    for (let i = 0; i < activePlatforms[platform].rides.length; i++) {
+        if (activePlatforms[platform].rides[i].id === rideId) {
+            ride = activePlatforms[platform].rides[i];
+            break;
+        }
+    }
 
     if (ride) {
         ride.status = 'accepted';
-        acceptedRides.push({ ...ride, platform, acceptedAt: new Date() });
+        acceptedRides.push(Object.assign({}, ride, { platform: platform, acceptedAt: new Date() }));
 
-        // Se for corrida REAL → comando para MacroDroid
+        // Se for corrida REAL envia comando para MacroDroid
         if (ride.source === 'real') {
             pendingAcceptCommands.push({
-                rideId,
-                platform,
-                timestamp:  new Date(),
-                executed:   false
+                rideId:    rideId,
+                platform:  platform,
+                timestamp: new Date(),
+                executed:  false
             });
-            console.log(`🤖 Comando MacroDroid enviado: ${platform}`);
+            console.log('Comando MacroDroid enviado: ' + platform);
         }
 
-        console.log(`✅ Aceita: ${rideId} [${ride.source || 'simulado'}]`);
+        console.log('Aceita: ' + rideId + ' [' + (ride.source || 'simulado') + ']');
         res.json({ success: true, isReal: ride.source === 'real' });
     } else {
-        res.json({ success: false, message: 'Corrida não encontrada' });
+        res.json({ success: false, message: 'Corrida nao encontrada' });
     }
 });
 
@@ -219,10 +216,17 @@ app.post('/api/reject-ride', (req, res) => {
         return res.json({ success: false });
     }
 
-    const ride = activePlatforms[platform].rides.find(r => r.id === rideId);
+    let ride = null;
+    for (let i = 0; i < activePlatforms[platform].rides.length; i++) {
+        if (activePlatforms[platform].rides[i].id === rideId) {
+            ride = activePlatforms[platform].rides[i];
+            break;
+        }
+    }
+
     if (ride) {
         ride.status = 'rejected';
-        console.log(`❌ Rejeitada: ${rideId}`);
+        console.log('Rejeitada: ' + rideId);
         res.json({ success: true });
     } else {
         res.json({ success: false });
@@ -230,11 +234,11 @@ app.post('/api/reject-ride', (req, res) => {
 });
 
 // ================================================
-// MACRODROID — BUSCAR COMANDOS PENDENTES
+// MACRODROID BUSCAR COMANDOS PENDENTES
 // ================================================
 app.get('/api/pending-commands', (req, res) => {
-    const pending = pendingAcceptCommands.filter(c => !c.executed);
-    pending.forEach(c => c.executed = true);
+    const pending = pendingAcceptCommands.filter(function(c) { return !c.executed; });
+    pending.forEach(function(c) { c.executed = true; });
     res.json(pending);
 });
 
@@ -245,7 +249,7 @@ app.post('/api/platform/:platform/toggle', (req, res) => {
     const { platform } = req.params;
     if (activePlatforms[platform]) {
         activePlatforms[platform].enabled = !activePlatforms[platform].enabled;
-        console.log(`🔄 ${platform}: ${activePlatforms[platform].enabled ? 'ON' : 'OFF'}`);
+        console.log(platform + ': ' + (activePlatforms[platform].enabled ? 'ON' : 'OFF'));
         res.json({ success: true, enabled: activePlatforms[platform].enabled });
     } else {
         res.json({ success: false });
@@ -253,76 +257,90 @@ app.post('/api/platform/:platform/toggle', (req, res) => {
 });
 
 // ================================================
-// ESTATÍSTICAS
+// ESTATISTICAS
 // ================================================
 app.get('/api/stats', (req, res) => {
     const stats = {};
-    Object.keys(activePlatforms).forEach(platform => {
+    Object.keys(activePlatforms).forEach(function(platform) {
         const rides = activePlatforms[platform].rides;
         stats[platform] = {
             total:    rides.length,
-            pending:  rides.filter(r => r.status === 'pending').length,
-            accepted: rides.filter(r => r.status === 'accepted').length,
-            rejected: rides.filter(r => r.status === 'rejected').length,
-            real:     rides.filter(r => r.source === 'real').length
+            pending:  rides.filter(function(r) { return r.status === 'pending'; }).length,
+            accepted: rides.filter(function(r) { return r.status === 'accepted'; }).length,
+            rejected: rides.filter(function(r) { return r.status === 'rejected'; }).length,
+            real:     rides.filter(function(r) { return r.source === 'real'; }).length
         };
     });
     res.json(stats);
 });
 
 // ================================================
-// SIMULADOR — configurações por plataforma
+// SIMULADOR
 // ================================================
 const platformConfigs = {
     ifood: {
         destinations: [
-            'Av. Lions, Santo André', 'Rua das Figueiras',
-            'Vila Jordanópolis', 'Assaí Atacadista',
-            'Eng. Salvador Arena', 'Centro de Santo André'
+            'Av. Lions, Santo Andre',
+            'Rua das Figueiras',
+            'Vila Jordanopolis',
+            'Assai Atacadista',
+            'Eng. Salvador Arena',
+            'Centro de Santo Andre'
         ],
-        minEarnings: 12, maxEarnings: 45
+        minEarnings: 12,
+        maxEarnings: 45
     },
     ubereats: {
         destinations: [
-            'Vila Jordanópolis', 'Universidade Federal ABC',
-            'Benz Brasil', 'Vila Luzita', 'Av. Lions'
+            'Vila Jordanopolis',
+            'Universidade Federal ABC',
+            'Benz Brasil',
+            'Vila Luzita',
+            'Av. Lions'
         ],
-        minEarnings: 15, maxEarnings: 50
+        minEarnings: 15,
+        maxEarnings: 50
     },
     keeta: {
         destinations: [
-            'Santo André Centro', 'Av. Industrial',
-            'Vila Palmares', 'Campestre',
-            'Silveira', 'Jardim Bela Vista'
+            'Santo Andre Centro',
+            'Av. Industrial',
+            'Vila Palmares',
+            'Campestre',
+            'Silveira',
+            'Jardim Bela Vista'
         ],
-        minEarnings: 10, maxEarnings: 40
+        minEarnings: 10,
+        maxEarnings: 40
     },
     loggi: {
         destinations: [
-            'São Bernardo do Campo', 'Rudge Ramos',
-            'Diadema', 'Mauá',
-            'Ribeirão Pires', 'Rio Grande da Serra'
+            'Sao Bernardo do Campo',
+            'Rudge Ramos',
+            'Diadema',
+            'Maua',
+            'Ribeirao Pires',
+            'Rio Grande da Serra'
         ],
-        minEarnings: 18, maxEarnings: 55
+        minEarnings: 18,
+        maxEarnings: 55
     }
 };
 
-// ================================================
-// GERAR CORRIDAS SIMULADAS (fallback)
-// ================================================
-setInterval(() => {
+setInterval(function() {
     const centerLat = userPreferences.latitude  || -23.6821;
     const centerLng = userPreferences.longitude || -46.5650;
     const raio      = userPreferences.raioMaximo  || 5;
     const ganhoMin  = userPreferences.ganhoMinimo || 15;
 
-    Object.keys(activePlatforms).forEach(platform => {
+    Object.keys(activePlatforms).forEach(function(platform) {
         if (!activePlatforms[platform].enabled) return;
 
-        // Se tem corrida REAL pendente não gera simulada
-        const realPending = activePlatforms[platform].rides.filter(
-            r => r.status === 'pending' && r.source === 'real'
-        ).length;
+        // Se tem corrida REAL pendente nao gera simulada
+        let realPending = 0;
+        activePlatforms[platform].rides.forEach(function(r) {
+            if (r.status === 'pending' && r.source === 'real') realPending++;
+        });
         if (realPending > 0) return;
 
         const config   = platformConfigs[platform];
@@ -338,12 +356,12 @@ setInterval(() => {
             if (parseFloat(earnings) < ganhoMin) continue;
 
             activePlatforms[platform].rides.push({
-                id:          `${platform}-sim-${Date.now()}-${i}`,
-                platform,
+                id:          platform + '-sim-' + Date.now() + '-' + i,
+                platform:    platform,
                 lat:         centerLat + offset,
                 lng:         centerLng + offset,
-                distance,
-                earnings,
+                distance:    distance,
+                earnings:    earnings,
                 destination: config.destinations[
                     Math.floor(Math.random() * config.destinations.length)
                 ],
@@ -353,20 +371,20 @@ setInterval(() => {
             });
         }
 
-        // Manter só as últimas 50
+        // Manter so as ultimas 50
         if (activePlatforms[platform].rides.length > 50) {
             activePlatforms[platform].rides =
                 activePlatforms[platform].rides.slice(-50);
         }
     });
 
-    // Limpar comandos antigos (>30s)
+    // Limpar comandos antigos mais de 30s
     const cutoff = Date.now() - 30000;
-    pendingAcceptCommands = pendingAcceptCommands.filter(
-        c => new Date(c.timestamp).getTime() > cutoff
-    );
+    pendingAcceptCommands = pendingAcceptCommands.filter(function(c) {
+        return new Date(c.timestamp).getTime() > cutoff;
+    });
 
-    console.log(`📍 Simulador rodando: ${new Date().toLocaleTimeString('pt-BR')}`);
+    console.log('Simulador: ' + new Date().toLocaleTimeString('pt-BR'));
 
 }, 5000);
 
@@ -374,8 +392,8 @@ setInterval(() => {
 // INICIAR SERVIDOR
 // ================================================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 DeliveryHub rodando na porta ${PORT}`);
-    console.log('📱 Aguardando notificações reais do MacroDroid...');
-    console.log('🔵 Simulador ativo como fallback');
+app.listen(PORT, function() {
+    console.log('DeliveryHub rodando na porta ' + PORT);
+    console.log('Aguardando notificacoes reais do MacroDroid...');
+    console.log('Simulador ativo como fallback');
 });
