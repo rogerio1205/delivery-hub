@@ -1,31 +1,42 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname)));
 
+// Servir o index.html
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-let userPreferences = {};
+let userPreferences = {
+    latitude: -23.5505,
+    longitude: -46.6333,
+    raioMaximo: 5,
+    ganhoMinimo: 15,
+    distanciaMaxima: 10
+};
+
 let activePlatforms = {
     ifood: { rides: [], enabled: true },
-    uber: { rides: [], enabled: true },
+    ubereats: { rides: [], enabled: true },
     keeta: { rides: [], enabled: true },
     loggi: { rides: [], enabled: true }
 };
 
 let acceptedRides = [];
 
-app.post('/api/preferences', (req, res) => {
+// Salvar preferências
+app.post('/api/config', (req, res) => {
     userPreferences = req.body;
-    console.log('✅ Preferências atualizadas:', userPreferences);
-    res.json({ success: true });
+    console.log('✅ Configurações atualizadas:', userPreferences);
+    res.json({ success: true, message: 'Configurações salvas!' });
 });
 
+// Obter todas as corridas
 app.get('/api/rides', (req, res) => {
     const allRides = [];
     Object.keys(activePlatforms).forEach(platform => {
@@ -38,6 +49,7 @@ app.get('/api/rides', (req, res) => {
     res.json(allRides);
 });
 
+// Aceitar corrida
 app.post('/api/accept-ride', (req, res) => {
     const { rideId, platform } = req.body;
     const ride = activePlatforms[platform].rides.find(r => r.id === rideId);
@@ -52,6 +64,7 @@ app.post('/api/accept-ride', (req, res) => {
     }
 });
 
+// Rejeitar corrida
 app.post('/api/reject-ride', (req, res) => {
     const { rideId, platform } = req.body;
     const ride = activePlatforms[platform].rides.find(r => r.id === rideId);
@@ -65,6 +78,7 @@ app.post('/api/reject-ride', (req, res) => {
     }
 });
 
+// Alternar plataforma
 app.post('/api/platform/:platform/toggle', (req, res) => {
     const { platform } = req.params;
     if (activePlatforms[platform]) {
@@ -75,6 +89,7 @@ app.post('/api/platform/:platform/toggle', (req, res) => {
     }
 });
 
+// Obter estatísticas
 app.get('/api/stats', (req, res) => {
     const stats = {};
     Object.keys(activePlatforms).forEach(platform => {
@@ -89,33 +104,64 @@ app.get('/api/stats', (req, res) => {
     res.json(stats);
 });
 
+// Configurações das plataformas
 const platformConfigs = {
-    ifood: { color: '#ea1d2c', destinations: ['Av. Paulista', 'Rua Augusta', 'Consolação', 'Vila Mariana', 'Bela Vista', 'Pinheiros'] },
-    uber: { color: '#000000', destinations: ['Bela Vista', 'Pinheiros', 'Higienópolis', 'Cerqueira César', 'Itaim', 'Brooklin'] },
-    keeta: { color: '#00d4ff', destinations: ['Jardins', 'Tatuapé', 'Aricanduva', 'Mooca', 'Vila Olímpia', 'Saúde'] },
-    loggi: { color: '#ff6b00', destinations: ['Itaim', 'Brooklin', 'Vila Olímpia', 'Saúde', 'Consolação', 'Higienópolis'] }
+    ifood: { 
+        color: '#ea1d2c', 
+        destinations: ['Av. Paulista', 'Rua Augusta', 'Consolação', 'Vila Mariana', 'Bela Vista', 'Pinheiros'],
+        minEarnings: 12,
+        maxEarnings: 45
+    },
+    ubereats: { 
+        color: '#000000', 
+        destinations: ['Bela Vista', 'Pinheiros', 'Higienópolis', 'Cerqueira César', 'Itaim', 'Brooklin'],
+        minEarnings: 15,
+        maxEarnings: 50
+    },
+    keeta: { 
+        color: '#00d4ff', 
+        destinations: ['Jardins', 'Tatuapé', 'Aricanduva', 'Mooca', 'Vila Olímpia', 'Saúde'],
+        minEarnings: 10,
+        maxEarnings: 40
+    },
+    loggi: { 
+        color: '#ff6b00', 
+        destinations: ['Itaim', 'Brooklin', 'Vila Olímpia', 'Saúde', 'Consolação', 'Higienópolis'],
+        minEarnings: 18,
+        maxEarnings: 55
+    }
 };
 
+// Gerar corridas simuladas
 setInterval(() => {
     const centerLat = userPreferences.latitude || -23.5505;
     const centerLng = userPreferences.longitude || -46.6333;
+    const raioMaximo = userPreferences.raioMaximo || 5;
+    const ganhoMinimo = userPreferences.ganhoMinimo || 15;
 
     Object.keys(activePlatforms).forEach(platform => {
         if (!activePlatforms[platform].enabled) return;
 
-        const numRides = Math.random() > 0.6 ? 2 : 1;
+        // Gerar 1-2 corridas por plataforma
+        const numRides = Math.random() > 0.7 ? 2 : 1;
 
         for (let i = 0; i < numRides; i++) {
-            const randomOffset = (Math.random() - 0.5) * 0.15;
+            const randomOffset = (Math.random() - 0.5) * (raioMaximo / 111); // Converter km para graus
             const config = platformConfigs[platform];
+
+            const distance = Math.random() * raioMaximo + 0.5;
+            const earnings = Math.random() * (config.maxEarnings - config.minEarnings) + config.minEarnings;
+
+            // Filtrar por critérios do usuário
+            if (earnings < ganhoMinimo) continue;
 
             const newRide = {
                 id: `${platform}-${Date.now()}-${i}`,
                 platform: platform,
                 lat: centerLat + randomOffset,
                 lng: centerLng + randomOffset,
-                distance: Math.random() * 10 + 0.5,
-                earnings: Math.random() * 40 + 12,
+                distance: distance.toFixed(1),
+                earnings: earnings.toFixed(2),
                 destination: config.destinations[Math.floor(Math.random() * config.destinations.length)],
                 timestamp: new Date(),
                 status: 'pending',
@@ -125,15 +171,19 @@ setInterval(() => {
             activePlatforms[platform].rides.push(newRide);
         }
 
-        if (activePlatforms[platform].rides.length > 30) {
-            activePlatforms[platform].rides = activePlatforms[platform].rides.slice(-30);
+        // Manter apenas as últimas 50 corridas
+        if (activePlatforms[platform].rides.length > 50) {
+            activePlatforms[platform].rides = activePlatforms[platform].rides.slice(-50);
         }
     });
-}, 4000);
 
-const PORT = 3000;
+    console.log(`📍 Corridas geradas às ${new Date().toLocaleTimeString('pt-BR')}`);
+}, 5000); // Gerar a cada 5 segundos
+
+// Iniciar servidor
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+    console.log(`🚀 Servidor DeliveryHub rodando em porta ${PORT}`);
     console.log('📱 Monitorando: iFood, Uber Eats, Keeta, Loggi');
     console.log('⏳ Aguardando conexão do app...');
 });
