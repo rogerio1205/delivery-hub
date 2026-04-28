@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeliveryHub - Monitor Multi-Plataforma</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 420px;
+            background: white;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #666;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #ea1d2c;
+            box-shadow: 0 0 0 3px rgba(234, 29, 44, 0.1);
+        }
+
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .platform-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .platform-toggle:hover {
+            border-color: #ea1d2c;
+        }
+
+        .platform-toggle.active {
+            border-color: #4caf50;
+            background: #f1f8f6;
+        }
+
+        .platform-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .platform-toggle.ifood .platform-icon {
+            background: #ea1d2c;
+        }
+
+        .platform-toggle.uber .platform-icon {
+            background: #000;
+        }
+
+        .platform-toggle.keeta .platform-icon {
+            background: #00d4ff;
+        }
+
+        .platform-toggle.loggi .platform-icon {
+            background: #ff6b00;
+        }
+
+        .platform-name {
+            flex: 1;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4caf50;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            background: #ea1d2c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #c41620;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.secondary {
+            background: #666;
+        }
+
+        button.secondary:hover {
+            background: #555;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: #f0f0f0;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #ea1d2c;
+        }
+
+        .stat-card.uber {
+            border-left-color: #000;
+        }
+
+        .stat-card.keeta {
+            border-left-color: #00d4ff;
+        }
+
+        .stat-card.loggi {
+            border-left-color: #ff6b00;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .rides-list {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .ride-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            transition: all 0.3s;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .ride-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .ride-item.rejected {
+            opacity: 0.5;
+        }
+
+        .ride-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+
+        .ride-platform-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .ride-platform-badge.ifood {
+            background: #ea1d2c;
+        }
+
+        .ride-platform-badge.uber {
+            background: #000;
+        }
+
+        .ride-platform-badge.keeta {
+            background: #00d4ff;
+            color: #000;
+        }
+
+        .ride-platform-badge.loggi {
+            background: #ff6b00;
+        }
+
+        .ride-destination {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ride-badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: #4caf50;
+            color: white;
+            font-weight: 600;
+        }
+
+        .ride-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .ride-earnings {
+            font-weight: 600;
+            color: #4caf50;
+        }
+
+        .ride-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .ride-actions button {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+            margin: 0;
+        }
+
+        .ride-actions button.accept {
+            background: #4caf50;
+        }
+
+        .ride-actions button.accept:hover {
+            background: #45a049;
+        }
+
+        .ride-actions button.reject {
+            background: #f44336;
+        }
+
+        .ride-actions button.reject:hover {
+            background: #da190b;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideInRight 0.5s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 30px 0;
+            font-size: 13px;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #1565c0;
+            margin-bottom: 15px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>
+                <span class="status-indicator"></span>
+                DeliveryHub
+            </h1>
+
+            <div class="info-box">
+                Monitor em tempo real para iFood, Uber Eats, Keeta e Loggi
+            </div>
+
+            <div class="section">
+                <div class="section-title">Sua Localização</div>
+                <div class="form-group">
+                    <label>Latitude</label>
+                    <input type="number" id="latitude" placeholder="-23.5505" step="0.0001" value="-23.5505">
+                </div>
+                <div class="form-group">
+                    <label>Longitude</label>
+                    <input type="number" id="longitude" placeholder="-46.6333" step="0.0001" value="-46.6333">
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Critérios de Filtro</div>
+                <div class="form-group">
+                    <label>Raio Máximo (km)</label>
+                    <input type="number" id="radius" min="0.5" max="50" step="0.5" value="5">
+                </div>
+                <div class="form-group">
+                    <label>Ganho Mínimo (R$)</label>
+                    <input type="number" id="minEarnings" min="0" step="0.50" value="15">
+                </div>
+                <div class="form-group">
+                    <label>Distância Máxima (km)</label>
+                    <input type="number" id="maxDistance" min="1" step="0.5" value="10">
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Plataformas Ativas</div>
+                <div class="platforms-grid">
+                    <div class="platform-toggle ifood active" onclick="togglePlatform('ifood', this)">
+                        <div class="platform-icon">IF</div>
+                        <div class="platform-name">iFood</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="platform-toggle uber active" onclick="togglePlatform('uber', this)">
+                        <div class="platform-icon">UE</div>
+                        <div class="platform-name">Uber</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="platform-toggle keeta active" onclick="togglePlatform('keeta', this)">
+                        <div class="platform-icon">KT</div>
+                        <div class="platform-name">Keeta</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="platform-toggle loggi active" onclick="togglePlatform('loggi', this)">
+                        <div class="platform-icon">LG</div>
+                        <div class="platform-name">Loggi</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button onclick="savePreferences()">Salvar</button>
+                <button class="secondary" onclick="clearRides()">Limpar</button>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Estatísticas</div>
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card ifood">
+                        <div class="stat-label">iFood</div>
+                        <div class="stat-value" id="stat-ifood">0</div>
+                    </div>
+                    <div class="stat-card uber">
+                        <div class="stat-label">Uber</div>
+                        <div class="stat-value" id="stat-uber">0</div>
+                    </div>
+                    <div class="stat-card keeta">
+                        <div class="stat-label">Keeta</div>
+                        <div class="stat-value" id="stat-keeta">0</div>
+                    </div>
+                    <div class="stat-card loggi">
+                        <div class="stat-label">Loggi</div>
+                        <div class="stat-value" id="stat-loggi">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Corridas Disponíveis</div>
+                <div class="rides-list">
+                    <div id="ridesList" class="empty-state">Aguardando corridas...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+        let map;
+        let centerMarker;
+        let radiusCircle;
+        let rideMarkers = [];
+        let enabledPlatforms = { ifood: true, uber: true, keeta: true, loggi: true };
+
+        const API_URL = 'http://localhost:3000/api';
+
+        function initMap() {
+            map = L.map('map').setView([-23.5505, -46.6333], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            updateCenterMarker();
+            startMonitoring();
+        }
+
+        function updateCenterMarker() {
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lng = parseFloat(document.getElementById('longitude').value);
+
+            if (centerMarker) {
+                map.removeLayer(centerMarker);
+            }
+
+            centerMarker = L.marker([lat, lng], {
+                icon: L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).addTo(map).bindPopup('Sua Localização');
+
+            updateRadiusCircle();
+            map.setView([lat, lng], 13);
+        }
+
+        function updateRadiusCircle() {
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lng = parseFloat(document.getElementById('longitude').value);
+            const radius = parseFloat(document.getElementById('radius').value) * 1000;
+
+            if (radiusCircle) {
+                map.removeLayer(radiusCircle);
+            }
+
+            radiusCircle = L.circle([lat, lng], {
+                color: '#ea1d2c',
+                fillColor: '#ea1d2c',
+                fillOpacity: 0.1,
+                weight: 2,
+                radius: radius
+            }).addTo(map);
+        }
+
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function savePreferences() {
+            const preferences = {
+                latitude: parseFloat(document.getElementById('latitude').value),
+                longitude: parseFloat(document.getElementById('longitude').value),
+                radius: parseFloat(document.getElementById('radius').value),
+                minEarnings: parseFloat(document.getElementById('minEarnings').value),
+                maxDistance: parseFloat(document.getElementById('maxDistance').value)
+            };
+
+            fetch(`${API_URL}/preferences`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(preferences)
+            }).then(() => {
+                showNotification('✅ Preferências salvas!');
+                updateCenterMarker();
+            }).catch(err => {
+                showNotification('❌ Erro ao conectar ao servidor');
+                console.error(err);
+            });
+        }
+
+        function togglePlatform(platform, element) {
+            enabledPlatforms[platform] = !enabledPlatforms[platform];
+            element.classList.toggle('active');
+            element.querySelector('input').checked = enabledPlatforms[platform];
+
+            fetch(`${API_URL}/platform/${platform}/toggle`, {
+                method: 'POST'
+            }).then(res => res.json()).then(data => {
+                showNotification(`${platform.toUpperCase()} ${data.enabled ? '✅ ativado' : '❌ desativado'}`);
+            }).catch(err => {
+                showNotification('❌ Erro ao conectar ao servidor');
+            });
+        }
+
+        function startMonitoring() {
+            setInterval(() => {
+                fetch(`${API_URL}/rides`)
+                    .then(res => res.json())
+                    .then(rides => {
+                        const centerLat = parseFloat(document.getElementById('latitude').value);
+                        const centerLng = parseFloat(document.getElementById('longitude').value);
+                        const maxRadius = parseFloat(document.getElementById('radius').value);
+                        const minEarnings = parseFloat(document.getElementById('minEarnings').value);
+                        const maxDistance = parseFloat(document.getElementById('maxDistance').value);
+
+                        rideMarkers.forEach(marker => map.removeLayer(marker));
+                        rideMarkers = [];
+
+                        const stats = { ifood: 0, uber: 0, keeta: 0, loggi: 0 };
+                        const ridesList = document.getElementById('ridesList');
+                        ridesList.innerHTML = '';
+
+                        rides.forEach(ride => {
+                            const distance = calculateDistance(centerLat, centerLng, ride.lat, ride.lng);
+                            const isAccepted = distance <= maxRadius && ride.earnings >= minEarnings && ride.distance <= maxDistance;
+
+                            if (isAccepted) {
+                                stats[ride.platform]++;
+                            }
+
+                            const colorMap = {
+                                ifood: 'red',
+                                uber: 'black',
+                                keeta: 'blue',
+                                loggi: 'orange'
+                            };
+
+                            const icon = L.icon({
+                                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${isAccepted ? colorMap[ride.platform] : 'grey'}.png`,
+                                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                                iconSize: [25, 41],
+                                iconAnchor: [12, 41],
+                                popupAnchor: [1, -34],
+                                shadowSize: [41, 41]
+                            });
+
+                            const marker = L.marker([ride.lat, ride.lng], { icon }).addTo(map);
+                            marker.bindPopup(`<strong>${ride.destination}</strong><br>R$ ${
+
