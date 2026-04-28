@@ -1,286 +1,300 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>DeliveryHub</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQC2JCQhdB38fTrvmNz_Wbv0arXvmsR8g&libraries=geometry&callback=initMap" async defer></script>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-        :root{
-            --primary:#667eea;--pdark:#5568d3;
-            --success:#28a745;--danger:#dc3545;
-            --ifood:#ea1d2c;--uber:#222;
-            --keeta:#00b4d8;--loggi:#ff6b00;
-            --bg:#f0f2f5;--card:#fff;
-            --border:#e0e0e0;--muted:#888;
-            --shadow:0 4px 18px rgba(0,0,0,.10);
-            --radius:14px;
-        }
-        body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>DeliveryHub</title>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC4bRFEFPMJqRFNaHzSRpKfTaVILxcnPhs&libraries=geometry&callback=initMap" async defer></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --primary:#667eea;--pdark:#5568d3;
+  --success:#28a745;--danger:#dc3545;
+  --ifood:#ea1d2c;--uber:#222;
+  --keeta:#00b4d8;--loggi:#ff6b00;
+  --bg:#f0f2f5;--card:#fff;
+  --border:#e0e0e0;--muted:#888;
+  --shadow:0 4px 18px rgba(0,0,0,.10);
+  --radius:14px;
+}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
 
-        /* HEADER */
-        .header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(102,126,234,.4)}
-        .header h1{font-size:18px;font-weight:800}
-        .header p{font-size:11px;opacity:.85;margin-top:1px}
-        .hstatus{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700}
-        .dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:blink 1.5s infinite}
-        @keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+/* HEADER */
+.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(102,126,234,.4)}
+.header h1{font-size:18px;font-weight:800}
+.header p{font-size:11px;opacity:.85;margin-top:1px}
+.hstatus{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+.tbar{height:3px;background:#ddd}
+.tbar-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);animation:tbar 2s linear infinite;transform-origin:left}
+@keyframes tbar{0%{transform:scaleX(1)}100%{transform:scaleX(0)}}
 
-        /* TIMER BAR */
-        .tbar{height:3px;background:#ddd}
-        .tbar-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);animation:tbar 2s linear infinite;transform-origin:left}
-        @keyframes tbar{0%{transform:scaleX(1)}100%{transform:scaleX(0)}}
+/* LAYOUT */
+.layout{display:flex;flex:1;gap:12px;padding:12px;max-width:1400px;margin:0 auto;width:100%}
+.col-left{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
+.col-right{width:340px;display:flex;flex-direction:column;gap:12px;flex-shrink:0}
 
-        /* LAYOUT */
-        .layout{display:flex;flex:1;gap:12px;padding:12px;max-width:1400px;margin:0 auto;width:100%}
-        .col-left{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
-        .col-right{width:340px;display:flex;flex-direction:column;gap:12px;flex-shrink:0}
+/* MAPA */
+.map-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+#map{height:300px;width:100%}
+.map-foot{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fafafa;border-top:1px solid var(--border);flex-wrap:wrap}
+.map-coords{font-size:11px;color:var(--muted)}
+.btn-loc{padding:8px 14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer}
 
-        /* MAPA */
-        .map-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-        #map{height:360px;width:100%}
-        .map-foot{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fafafa;border-top:1px solid var(--border);flex-wrap:wrap}
-        .map-coords{font-size:11px;color:var(--muted)}
-        .btn-loc{padding:8px 14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;transition:all .25s}
-        .btn-loc:hover{background:var(--pdark);transform:translateY(-1px)}
+/* CONFIG */
+.cfg-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.cfg-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.cfg-field label{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px;text-transform:uppercase}
+.cfg-field input{width:100%;padding:9px 10px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:#fafafa}
+.cfg-field input:focus{outline:none;border-color:var(--primary);background:#fff}
+.btn-save{width:100%;padding:11px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer}
 
-        /* CONFIG */
-        .cfg-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-        .cfg-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
-        .cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-        .cfg-field label{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
-        .cfg-field input{width:100%;padding:9px 10px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:#fafafa;transition:border .2s}
-        .cfg-field input:focus{outline:none;border-color:var(--primary);background:#fff}
-        .btn-save{width:100%;padding:11px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;transition:all .25s}
-        .btn-save:hover{opacity:.9;transform:translateY(-1px)}
+/* PLATAFORMAS */
+.plt-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.plt-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
+.plt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.plt-btn{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all .2s;border:2px solid transparent;background:#f8f8f8;user-select:none}
+.plt-btn.on-ifood{border-color:var(--ifood);background:#fff5f5}
+.plt-btn.on-ubereats{border-color:var(--uber);background:#f5f5f5}
+.plt-btn.on-keeta{border-color:var(--keeta);background:#f0faff}
+.plt-btn.on-loggi{border-color:var(--loggi);background:#fff8f0}
+.plt-btn.off{opacity:.4;border-color:var(--border)!important;background:#f0f0f0!important}
+.plt-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.plt-name{font-size:12px;font-weight:800;flex:1}
+.plt-cnt{font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.07);min-width:22px;text-align:center}
 
-        /* PLATAFORMAS */
-        .plt-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-        .plt-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
-        .plt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-        .plt-btn{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all .2s;border:2px solid transparent;background:#f8f8f8;user-select:none}
-        .plt-btn.on-ifood{border-color:var(--ifood);background:#fff5f5}
-        .plt-btn.on-ubereats{border-color:var(--uber);background:#f5f5f5}
-        .plt-btn.on-keeta{border-color:var(--keeta);background:#f0faff}
-        .plt-btn.on-loggi{border-color:var(--loggi);background:#fff8f0}
-        .plt-btn.off{opacity:.4;border-color:var(--border)!important;background:#f0f0f0!important}
-        .plt-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-        .plt-name{font-size:12px;font-weight:800;flex:1}
-        .plt-cnt{font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.07);min-width:22px;text-align:center}
+/* STATS */
+.stats-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat-box{text-align:center;padding:10px 6px;border-radius:10px;border-top:3px solid var(--primary);background:#f5f7ff}
+.stat-box.ifood{border-color:var(--ifood);background:#fff5f5}
+.stat-box.uber{border-color:var(--uber);background:#f5f5f5}
+.stat-box.keeta{border-color:var(--keeta);background:#f0faff}
+.stat-box.loggi{border-color:var(--loggi);background:#fff8f0}
+.stat-v{font-size:20px;font-weight:800;color:#333}
+.stat-l{font-size:10px;color:var(--muted);margin-top:3px;font-weight:700;text-transform:uppercase}
 
-        /* STATS */
-        .stats-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
-        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-        .stat-box{text-align:center;padding:10px 6px;border-radius:10px;border-top:3px solid var(--primary);background:#f5f7ff}
-        .stat-box.ifood{border-color:var(--ifood);background:#fff5f5}
-        .stat-box.uber{border-color:var(--uber);background:#f5f5f5}
-        .stat-box.keeta{border-color:var(--keeta);background:#f0faff}
-        .stat-box.loggi{border-color:var(--loggi);background:#fff8f0}
-        .stat-v{font-size:20px;font-weight:800;color:#333}
-        .stat-l{font-size:10px;color:var(--muted);margin-top:3px;font-weight:700;text-transform:uppercase}
+/* RIDES */
+.rides-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+.rides-head{padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.rides-head h3{font-size:15px;font-weight:700}
+.rides-badge{background:var(--primary);color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
+.rides-list{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;max-height:500px}
+.rides-list::-webkit-scrollbar{width:4px}
+.rides-list::-webkit-scrollbar-thumb{background:var(--primary);border-radius:4px}
 
-        /* RIDES */
-        .rides-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0}
-        .rides-head{padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-        .rides-head h3{font-size:15px;font-weight:700}
-        .rides-badge{background:var(--primary);color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
-        .rides-list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;max-height:520px}
-        .rides-list::-webkit-scrollbar{width:4px}
-        .rides-list::-webkit-scrollbar-thumb{background:var(--primary);border-radius:4px}
+/* RIDE CARD */
+.ride-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;border-left:5px solid var(--primary);animation:slideIn .3s ease-out;position:relative}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.ride-card[data-p="ifood"]{border-left-color:var(--ifood)}
+.ride-card[data-p="ubereats"]{border-left-color:var(--uber)}
+.ride-card[data-p="keeta"]{border-left-color:var(--keeta)}
+.ride-card[data-p="loggi"]{border-left-color:var(--loggi)}
 
-        /* RIDE CARD */
-        .ride-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;border-left:5px solid var(--primary);animation:slideIn .3s ease-out;transition:all .25s;position:relative}
-        @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
-        .ride-card:hover{box-shadow:0 6px 18px rgba(102,126,234,.15);transform:translateY(-2px)}
-        .ride-card[data-p="ifood"]{border-left-color:var(--ifood)}
-        .ride-card[data-p="ubereats"]{border-left-color:var(--uber)}
-        .ride-card[data-p="keeta"]{border-left-color:var(--keeta)}
-        .ride-card[data-p="loggi"]{border-left-color:var(--loggi)}
+/* BADGE REAL vs SIM */
+.badge-real{position:absolute;top:8px;right:8px;background:#ea1d2c;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;animation:blink 1s infinite}
+.badge-sim{position:absolute;top:8px;right:8px;background:#667eea;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px}
 
-        /* BADGES */
-        .badge-real{position:absolute;top:8px;right:8px;background:#ea1d2c;color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:8px;letter-spacing:.5px;animation:blink 1s infinite}
-        .badge-sim{position:absolute;top:8px;right:8px;background:#667eea;color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:8px}
+.ride-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-right:60px}
+.ride-plt{display:flex;align-items:center;gap:5px}
+.ride-plt-dot{width:8px;height:8px;border-radius:50%}
+.ride-plt-name{font-size:12px;font-weight:800;letter-spacing:.5px}
+.ride-earn{font-size:18px;font-weight:800;color:var(--success)}
+.ride-dest{background:#f5f7ff;border-left:3px solid var(--primary);padding:6px 10px;border-radius:0 8px 8px 0;font-size:12px;margin-bottom:8px}
+.ride-meta{display:flex;gap:12px;margin-bottom:10px}
+.ride-meta span{font-size:11px;color:var(--muted)}
+.ride-meta strong{color:#333;font-size:12px}
+.ride-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.btn-ac,.btn-rj{padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .2s}
+.btn-ac{background:var(--success);color:#fff}
+.btn-ac:active{background:#218838;transform:scale(.97)}
+.btn-rj{background:var(--danger);color:#fff}
+.btn-rj:active{background:#c82333;transform:scale(.97)}
 
-        .ride-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-        .ride-plt{display:flex;align-items:center;gap:5px}
-        .ride-plt-dot{width:8px;height:8px;border-radius:50%}
-        .ride-plt-name{font-size:12px;font-weight:800;letter-spacing:.5px}
-        .ride-earn{font-size:16px;font-weight:800;color:var(--success)}
-        .ride-dest{background:#f5f7ff;border-left:3px solid var(--primary);padding:6px 10px;border-radius:0 8px 8px 0;font-size:12px;margin-bottom:8px}
-        .ride-meta{display:flex;gap:12px;margin-bottom:10px}
-        .ride-meta span{font-size:11px;color:var(--muted)}
-        .ride-meta strong{color:#333;font-size:12px}
-        .ride-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-        .btn-ac,.btn-rj{padding:9px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .2s}
-        .btn-ac{background:var(--success);color:#fff}
-        .btn-ac:hover{background:#218838;transform:scale(1.03)}
-        .btn-rj{background:var(--danger);color:#fff}
-        .btn-rj:hover{background:#c82333;transform:scale(1.03)}
+/* EMPTY */
+.empty{text-align:center;color:var(--muted);padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty-icon{font-size:42px;opacity:.4}
 
-        /* EMPTY */
-        .empty{text-align:center;color:var(--muted);padding:50px 20px;display:flex;flex-direction:column;align-items:center;gap:10px}
-        .empty-icon{font-size:42px;opacity:.4}
+/* ALERTA REAL */
+.alert-real{
+  position:fixed;top:70px;left:50%;transform:translateX(-50%);
+  background:#ea1d2c;color:#fff;padding:14px 24px;
+  border-radius:14px;font-weight:800;font-size:14px;
+  box-shadow:0 8px 30px rgba(234,29,44,.5);
+  z-index:9997;display:none;text-align:center;
+  animation:blink 0.5s infinite;
+  width:90%;max-width:340px;
+}
+.alert-real.show{display:block}
 
-        /* MODAL */
-        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;display:none;align-items:center;justify-content:center}
-        .modal-overlay.show{display:flex}
-        .modal{background:#fff;border-radius:var(--radius);padding:24px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;animation:popIn .3s ease}
-        @keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
-        .modal h2{font-size:20px;margin-bottom:8px}
-        .modal p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
-        .modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-        .btn-modal-ok{padding:12px;background:var(--success);color:#fff;border:none;border-radius:8px;font-weight:800;font-size:14px;cursor:pointer}
-        .btn-modal-cancel{padding:12px;background:#eee;color:#333;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:var(--radius);padding:24px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;animation:popIn .3s ease}
+@keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-icon{font-size:48px;margin-bottom:12px}
+.modal h2{font-size:20px;margin-bottom:8px}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.modal-earn{font-size:28px;font-weight:800;color:var(--success);margin:10px 0}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-modal-ok{padding:14px;background:var(--success);color:#fff;border:none;border-radius:8px;font-weight:800;font-size:15px;cursor:pointer}
+.btn-modal-cancel{padding:14px;background:#eee;color:#333;border:none;border-radius:8px;font-weight:700;font-size:15px;cursor:pointer}
 
-        /* TOAST */
-        .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);padding:12px 22px;background:#333;color:#fff;border-radius:30px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);white-space:nowrap}
-        .toast.show{transform:translateX(-50%) translateY(0)}
-        .toast.success{background:var(--success)}
-        .toast.error{background:var(--danger)}
-        .toast.info{background:var(--primary)}
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);padding:12px 22px;background:#333;color:#fff;border-radius:30px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--danger)}
+.toast.info{background:var(--primary)}
+.toast.real{background:#ea1d2c}
 
-        /* RESPONSIVE */
-        @media(max-width:960px){.layout{flex-direction:column}.col-right{width:100%}#map{height:280px}.rides-list{max-height:400px}}
-        @media(max-width:480px){#map{height:220px}.cfg-grid{grid-template-columns:1fr 1fr}.plt-grid{grid-template-columns:1fr 1fr}}
-    </style>
+/* RESPONSIVE */
+@media(max-width:960px){.layout{flex-direction:column}.col-right{width:100%}#map{height:240px}.rides-list{max-height:400px}}
+</style>
 </head>
 <body>
 
+<!-- ALERTA CORRIDA REAL -->
+<div class="alert-real" id="alertReal">🚨 CORRIDA REAL CHEGOU!</div>
+
 <!-- HEADER -->
 <div class="header">
-    <div>
-        <h1>🚗 DeliveryHub</h1>
-        <p>Monitor em Tempo Real</p>
-    </div>
-    <div class="hstatus">
-        <div class="dot"></div>
-        <span id="hstatusText">Online</span>
-    </div>
+  <div>
+    <h1>🚗 DeliveryHub</h1>
+    <p>Monitor em Tempo Real</p>
+  </div>
+  <div class="hstatus">
+    <div class="dot"></div>
+    <span id="hstatusText">Online</span>
+  </div>
 </div>
 <div class="tbar"><div class="tbar-fill"></div></div>
 
 <!-- LAYOUT -->
 <div class="layout">
 
-    <!-- COLUNA ESQUERDA -->
-    <div class="col-left">
+  <!-- ESQUERDA -->
+  <div class="col-left">
 
-        <!-- MAPA -->
-        <div class="map-card">
-            <div id="map"></div>
-            <div class="map-foot">
-                <span class="map-coords" id="mapCoords">📍 Santo André, SP</span>
-                <button class="btn-loc" onclick="getLocation()">📍 Minha Localização</button>
-            </div>
-        </div>
-
-        <!-- FILTROS -->
-        <div class="cfg-card">
-            <h3>⚙️ Filtros</h3>
-            <div class="cfg-grid">
-                <div class="cfg-field">
-                    <label>Raio (km)</label>
-                    <input type="number" id="raioMaximo" value="5" min="1" max="50" step="0.5">
-                </div>
-                <div class="cfg-field">
-                    <label>Ganho Mín (R$)</label>
-                    <input type="number" id="ganhoMinimo" value="15" min="0" step="0.50">
-                </div>
-                <div class="cfg-field">
-                    <label>Dist. Máx (km)</label>
-                    <input type="number" id="distanciaMaxima" value="10" min="1" max="100">
-                </div>
-                <div class="cfg-field">
-                    <label>Latitude</label>
-                    <input type="number" id="latInput" value="-23.6821" step="0.0001">
-                </div>
-            </div>
-            <button class="btn-save" onclick="saveConfig()">💾 Salvar Configurações</button>
-        </div>
-
-        <!-- PLATAFORMAS -->
-        <div class="plt-card">
-            <h3>📱 Plataformas</h3>
-            <div class="plt-grid">
-                <div class="plt-btn on-ifood" id="ptoggle-ifood" onclick="togglePlatform('ifood')">
-                    <div class="plt-dot" style="background:var(--ifood)"></div>
-                    <span class="plt-name" style="color:var(--ifood)">iFood</span>
-                    <span class="plt-cnt" id="pcnt-ifood">0</span>
-                </div>
-                <div class="plt-btn on-ubereats" id="ptoggle-ubereats" onclick="togglePlatform('ubereats')">
-                    <div class="plt-dot" style="background:var(--uber)"></div>
-                    <span class="plt-name" style="color:var(--uber)">Uber Eats</span>
-                    <span class="plt-cnt" id="pcnt-ubereats">0</span>
-                </div>
-                <div class="plt-btn on-keeta" id="ptoggle-keeta" onclick="togglePlatform('keeta')">
-                    <div class="plt-dot" style="background:var(--keeta)"></div>
-                    <span class="plt-name" style="color:var(--keeta)">Keeta</span>
-                    <span class="plt-cnt" id="pcnt-keeta">0</span>
-                </div>
-                <div class="plt-btn on-loggi" id="ptoggle-loggi" onclick="togglePlatform('loggi')">
-                    <div class="plt-dot" style="background:var(--loggi)"></div>
-                    <span class="plt-name" style="color:var(--loggi)">Loggi</span>
-                    <span class="plt-cnt" id="pcnt-loggi">0</span>
-                </div>
-            </div>
-        </div>
-
+    <!-- MAPA -->
+    <div class="map-card">
+      <div id="map"></div>
+      <div class="map-foot">
+        <span class="map-coords" id="mapCoords">📍 Santo André, SP</span>
+        <button class="btn-loc" onclick="getLocation()">📍 Minha Localização</button>
+      </div>
     </div>
 
-    <!-- COLUNA DIREITA -->
-    <div class="col-right">
-
-        <!-- STATS -->
-        <div class="stats-card">
-            <div class="stats-grid">
-                <div class="stat-box ifood">
-                    <div class="stat-v" id="st-ifood">0</div>
-                    <div class="stat-l">iFood</div>
-                </div>
-                <div class="stat-box uber">
-                    <div class="stat-v" id="st-ubereats">0</div>
-                    <div class="stat-l">Uber</div>
-                </div>
-                <div class="stat-box keeta">
-                    <div class="stat-v" id="st-keeta">0</div>
-                    <div class="stat-l">Keeta</div>
-                </div>
-                <div class="stat-box loggi">
-                    <div class="stat-v" id="st-loggi">0</div>
-                    <div class="stat-l">Loggi</div>
-                </div>
-            </div>
+    <!-- FILTROS -->
+    <div class="cfg-card">
+      <h3>⚙️ Filtros</h3>
+      <div class="cfg-grid">
+        <div class="cfg-field">
+          <label>Raio (km)</label>
+          <input type="number" id="raioMaximo" value="5" min="1" max="50" step="0.5">
         </div>
-
-        <!-- CORRIDAS -->
-        <div class="rides-card">
-            <div class="rides-head">
-                <h3>📦 Corridas</h3>
-                <span class="rides-badge" id="ridesBadge">0</span>
-            </div>
-            <div class="rides-list" id="ridesList">
-                <div class="empty">
-                    <span class="empty-icon">🛵</span>
-                    <span>Aguardando corridas...</span>
-                </div>
-            </div>
+        <div class="cfg-field">
+          <label>Ganho Mín (R$)</label>
+          <input type="number" id="ganhoMinimo" value="15" min="0" step="0.5">
         </div>
-
+        <div class="cfg-field">
+          <label>Dist. Máx (km)</label>
+          <input type="number" id="distanciaMaxima" value="10" min="1" max="100">
+        </div>
+        <div class="cfg-field">
+          <label>Latitude</label>
+          <input type="number" id="latInput" value="-23.6821" step="0.0001">
+        </div>
+      </div>
+      <button class="btn-save" onclick="saveConfig()">💾 Salvar Configurações</button>
     </div>
+
+    <!-- PLATAFORMAS -->
+    <div class="plt-card">
+      <h3>📱 Plataformas</h3>
+      <div class="plt-grid">
+        <div class="plt-btn on-ifood" id="ptoggle-ifood" onclick="togglePlatform('ifood')">
+          <div class="plt-dot" style="background:var(--ifood)"></div>
+          <span class="plt-name" style="color:var(--ifood)">iFood</span>
+          <span class="plt-cnt" id="pcnt-ifood">0</span>
+        </div>
+        <div class="plt-btn on-ubereats" id="ptoggle-ubereats" onclick="togglePlatform('ubereats')">
+          <div class="plt-dot" style="background:var(--uber)"></div>
+          <span class="plt-name" style="color:var(--uber)">Uber Eats</span>
+          <span class="plt-cnt" id="pcnt-ubereats">0</span>
+        </div>
+        <div class="plt-btn on-keeta" id="ptoggle-keeta" onclick="togglePlatform('keeta')">
+          <div class="plt-dot" style="background:var(--keeta)"></div>
+          <span class="plt-name" style="color:var(--keeta)">Keeta</span>
+          <span class="plt-cnt" id="pcnt-keeta">0</span>
+        </div>
+        <div class="plt-btn on-loggi" id="ptoggle-loggi" onclick="togglePlatform('loggi')">
+          <div class="plt-dot" style="background:var(--loggi)"></div>
+          <span class="plt-name" style="color:var(--loggi)">Loggi</span>
+          <span class="plt-cnt" id="pcnt-loggi">0</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DIREITA -->
+  <div class="col-right">
+
+    <!-- STATS -->
+    <div class="stats-card">
+      <div class="stats-grid">
+        <div class="stat-box ifood">
+          <div class="stat-v" id="st-ifood">0</div>
+          <div class="stat-l">iFood</div>
+        </div>
+        <div class="stat-box uber">
+          <div class="stat-v" id="st-ubereats">0</div>
+          <div class="stat-l">Uber</div>
+        </div>
+        <div class="stat-box keeta">
+          <div class="stat-v" id="st-keeta">0</div>
+          <div class="stat-l">Keeta</div>
+        </div>
+        <div class="stat-box loggi">
+          <div class="stat-v" id="st-loggi">0</div>
+          <div class="stat-l">Loggi</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CORRIDAS -->
+    <div class="rides-card">
+      <div class="rides-head">
+        <h3>📦 Corridas</h3>
+        <span class="rides-badge" id="ridesBadge">0</span>
+      </div>
+      <div class="rides-list" id="ridesList">
+        <div class="empty">
+          <span class="empty-icon">🛵</span>
+          <span>Aguardando corridas...</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
 </div>
 
-<!-- MODAL -->
+<!-- MODAL CORRIDA REAL -->
 <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-        <h2>🚨 Corrida REAL!</h2>
-        <p id="modalText">Confirmar aceitação?</p>
-        <div class="modal-btns">
-            <button class="btn-modal-ok" onclick="confirmAcceptReal()">✅ Aceitar</button>
-            <button class="btn-modal-cancel" onclick="closeModal()">❌ Cancelar</button>
-        </div>
+  <div class="modal">
+    <div class="modal-icon">🚨</div>
+    <h2>Corrida REAL!</h2>
+    <div class="modal-earn" id="modalEarn">R$ 0,00</div>
+    <p id="modalText">Confirmar aceitação?</p>
+    <div class="modal-btns">
+      <button class="btn-modal-ok" onclick="confirmAcceptReal()">✅ ACEITAR</button>
+      <button class="btn-modal-cancel" onclick="closeModal()">❌ Recusar</button>
     </div>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -288,324 +302,341 @@
 
 <script>
 const BACKEND = '';
-const POLL_MS = 2000;
+const POLL_MS  = 2000;
 
 const PLT_COLORS = {ifood:'#ea1d2c',ubereats:'#222222',keeta:'#00b4d8',loggi:'#ff6b00'};
 const PLT_LABELS = {ifood:'iFood',ubereats:'Uber Eats',keeta:'Keeta',loggi:'Loggi'};
 const PLT_ICONS  = {
-    ifood:    'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
-    ubereats: 'http://maps.google.com/mapfiles/ms/icons/purple-dot.png',
-    keeta:    'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-    loggi:    'http://maps.google.com/mapfiles/ms/icons/orange-dot.png'
+  ifood:   'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+  ubereats:'http://maps.google.com/mapfiles/ms/icons/purple-dot.png',
+  keeta:   'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+  loggi:   'http://maps.google.com/mapfiles/ms/icons/orange-dot.png'
 };
 
 let map, userMarker, circle;
-let rideMarkers = [];
-let allRides    = [];
-let pltStates   = {ifood:true,ubereats:true,keeta:true,loggi:true};
+let rideMarkers    = [];
+let allRides       = [];
+let pltStates      = {ifood:true,ubereats:true,keeta:true,loggi:true};
 let pendingRealRide = null;
+let alertTimer;
 
 // ── INIT MAPA ──
 function initMap() {
-    const pos = {lat:-23.6821,lng:-46.5650};
-    map = new google.maps.Map(document.getElementById('map'),{
-        zoom:14,center:pos,
-        mapTypeControl:false,fullscreenControl:false,
-        streetViewControl:false,zoomControl:true,
-        styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]}]
-    });
-    userMarker = new google.maps.Marker({
-        position:pos,map,title:'Você',
-        icon:{path:google.maps.SymbolPath.CIRCLE,scale:10,fillColor:'#667eea',fillOpacity:1,strokeColor:'#fff',strokeWeight:3},
-        zIndex:999
-    });
-    drawCircle(pos);
-    getLocation();
-    fetchRides();
-    setInterval(fetchRides, POLL_MS);
+  const pos = {lat:-23.6821,lng:-46.5650};
+  map = new google.maps.Map(document.getElementById('map'),{
+    zoom:14,center:pos,
+    mapTypeControl:false,fullscreenControl:false,
+    streetViewControl:false,zoomControl:true
+  });
+  userMarker = new google.maps.Marker({
+    position:pos,map,title:'Você',
+    icon:{path:google.maps.SymbolPath.CIRCLE,scale:10,fillColor:'#667eea',fillOpacity:1,strokeColor:'#fff',strokeWeight:3},
+    zIndex:999
+  });
+  drawCircle(pos);
+  getLocation();
+  fetchRides();
+  setInterval(fetchRides, POLL_MS);
 }
 
 // ── LOCALIZAÇÃO ──
 function getLocation() {
-    if (!navigator.geolocation) { showToast('Geolocalização não suportada','error'); return; }
-    navigator.geolocation.getCurrentPosition(pos => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const p   = {lat,lng};
-        userMarker.setPosition(p);
-        map.panTo(p);
-        map.setZoom(14);
-        document.getElementById('latInput').value = lat.toFixed(6);
-        document.getElementById('mapCoords').textContent = `📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-        drawCircle(p);
-        showToast('📍 Localização obtida!','success');
-    }, () => showToast('Não foi possível obter localização','error'),
-    {enableHighAccuracy:true,timeout:10000});
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    const p   = {lat:lat,lng:lng};
+    userMarker.setPosition(p);
+    map.panTo(p);
+    map.setZoom(14);
+    document.getElementById('latInput').value = lat.toFixed(6);
+    document.getElementById('mapCoords').textContent = '📍 ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
+    drawCircle(p);
+    showToast('📍 Localização obtida!','success');
+  }, function() {
+    showToast('Não foi possível obter localização','error');
+  }, {enableHighAccuracy:true,timeout:10000});
 }
 
 // ── CÍRCULO ──
 function drawCircle(center) {
-    if (circle) circle.setMap(null);
-    const r = parseFloat(document.getElementById('raioMaximo').value) || 5;
-    circle = new google.maps.Circle({
-        center,radius:r*1000,map,
-        fillColor:'#667eea',fillOpacity:.10,
-        strokeColor:'#667eea',strokeOpacity:.5,strokeWeight:2
-    });
+  if (circle) circle.setMap(null);
+  const r = parseFloat(document.getElementById('raioMaximo').value) || 5;
+  circle = new google.maps.Circle({
+    center:center,radius:r*1000,map:map,
+    fillColor:'#667eea',fillOpacity:.10,
+    strokeColor:'#667eea',strokeOpacity:.5,strokeWeight:2
+  });
 }
 
 // ── BUSCAR CORRIDAS ──
 function fetchRides() {
-    fetch(BACKEND+'/api/rides')
-        .then(r=>r.json())
-        .then(data=>{
-            allRides = data;
-            renderRides();
-            updateStats();
-            document.getElementById('hstatusText').textContent = 'Online';
-        })
-        .catch(()=>{
-            document.getElementById('hstatusText').textContent = 'Offline';
-        });
+  fetch(BACKEND+'/api/rides')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      const hadReal = allRides.some(function(r){return r.source==='real'&&r.status==='pending';});
+      allRides = data;
+      const hasReal = data.some(function(r){return r.source==='real'&&r.status==='pending';});
+
+      // Nova corrida real chegou?
+      if (hasReal && !hadReal) {
+        const realRide = data.find(function(r){return r.source==='real'&&r.status==='pending';});
+        if (realRide) showRealAlert(realRide);
+      }
+
+      renderRides();
+      updateStats();
+      document.getElementById('hstatusText').textContent = 'Online';
+    })
+    .catch(function(){
+      document.getElementById('hstatusText').textContent = 'Offline';
+    });
+}
+
+// ── ALERTA CORRIDA REAL ──
+function showRealAlert(ride) {
+  const el = document.getElementById('alertReal');
+  el.textContent = '🚨 CORRIDA REAL! R$ ' + parseFloat(ride.earnings).toFixed(2) + ' — ' + PLT_LABELS[ride.platform];
+  el.classList.add('show');
+  clearTimeout(alertTimer);
+  alertTimer = setTimeout(function(){ el.classList.remove('show'); }, 8000);
+
+  // Vibrar se disponível
+  if (navigator.vibrate) navigator.vibrate([300,100,300,100,300]);
+
+  showToast('🚨 CORRIDA REAL DO ' + PLT_LABELS[ride.platform].toUpperCase() + '!','real');
 }
 
 // ── FILTRAR ──
 function getFiltered() {
-    const ganhoMin = parseFloat(document.getElementById('ganhoMinimo').value)||0;
-    const raio     = parseFloat(document.getElementById('raioMaximo').value)||5;
-    const upos     = userMarker.getPosition();
-    return allRides.filter(ride=>{
-        if (ride.status !== 'pending') return false;
-        if (!pltStates[ride.platform]) return false;
-        if (parseFloat(ride.earnings) < ganhoMin) return false;
-        const dist = google.maps.geometry.spherical.computeDistanceBetween(
-            upos, new google.maps.LatLng(ride.lat,ride.lng)
-        )/1000;
-        return dist <= raio;
-    });
+  const ganhoMin = parseFloat(document.getElementById('ganhoMinimo').value)||0;
+  const raio     = parseFloat(document.getElementById('raioMaximo').value)||5;
+  const upos     = userMarker.getPosition();
+
+  return allRides.filter(function(ride) {
+    if (ride.status !== 'pending') return false;
+    if (!pltStates[ride.platform]) return false;
+    if (parseFloat(ride.earnings) < ganhoMin) return false;
+    const dist = google.maps.geometry.spherical.computeDistanceBetween(
+      upos, new google.maps.LatLng(ride.lat, ride.lng)
+    )/1000;
+    return dist <= raio;
+  });
 }
 
 // ── RENDERIZAR ──
 function renderRides() {
-    const filtered  = getFiltered();
-    const container = document.getElementById('ridesList');
-    document.getElementById('ridesBadge').textContent = filtered.length;
+  const filtered  = getFiltered();
+  const container = document.getElementById('ridesList');
+  document.getElementById('ridesBadge').textContent = filtered.length;
 
-    if (!filtered.length) {
-        container.innerHTML = `
-            <div class="empty">
-                <span class="empty-icon">🛵</span>
-                <span>Nenhuma corrida disponível</span>
-                <small style="font-size:11px;color:#bbb">Ajuste os filtros ou aguarde...</small>
-            </div>`;
-        updateMarkers([]);
-        return;
-    }
+  if (!filtered.length) {
+    container.innerHTML =
+      '<div class="empty"><span class="empty-icon">🛵</span><span>Nenhuma corrida disponível</span><small style="font-size:11px;color:#bbb">Aguarde novas corridas...</small></div>';
+    updateMarkers([]);
+    return;
+  }
 
-    container.innerHTML = filtered.map(ride=>{
-        const c      = PLT_COLORS[ride.platform]||'#667eea';
-        const l      = PLT_LABELS[ride.platform]||ride.platform;
-        const isReal = ride.source === 'real';
-        return `
-        <div class="ride-card" data-p="${ride.platform}">
-            ${isReal
-                ? `<div class="badge-real">🔴 REAL</div>`
-                : `<div class="badge-sim">🔵 SIM</div>`}
-            <div class="ride-top">
-                <div class="ride-plt">
-                    <div class="ride-plt-dot" style="background:${c}"></div>
-                    <span class="ride-plt-name" style="color:${c}">${l.toUpperCase()}</span>
-                </div>
-                <span class="ride-earn">R$ ${parseFloat(ride.earnings).toFixed(2)}</span>
-            </div>
-            <div class="ride-dest">📍 ${ride.destination}</div>
-            <div class="ride-meta">
-                <span>🛣️ <strong>${parseFloat(ride.distance).toFixed(1)} km</strong></span>
-                <span>⏱️ <strong>${timeAgo(ride.timestamp)}</strong></span>
-            </div>
-            <div class="ride-actions">
-                <button class="btn-ac" onclick="acceptRide('${ride.id}','${ride.platform}','${isReal}')">
-                    ✅ Aceitar
-                </button>
-                <button class="btn-rj" onclick="rejectRide('${ride.id}','${ride.platform}')">
-                    ❌ Rejeitar
-                </button>
-            </div>
-        </div>`;
-    }).join('');
+  container.innerHTML = filtered.map(function(ride) {
+    const c      = PLT_COLORS[ride.platform]||'#667eea';
+    const l      = PLT_LABELS[ride.platform]||ride.platform;
+    const isReal = ride.source === 'real';
+    return '<div class="ride-card" data-p="'+ride.platform+'">' +
+      (isReal ? '<div class="badge-real">🔴 REAL</div>' : '<div class="badge-sim">🔵 SIM</div>') +
+      '<div class="ride-top">' +
+        '<div class="ride-plt">' +
+          '<div class="ride-plt-dot" style="background:'+c+'"></div>' +
+          '<span class="ride-plt-name" style="color:'+c+'">'+l.toUpperCase()+'</span>' +
+        '</div>' +
+        '<span class="ride-earn">R$ '+parseFloat(ride.earnings).toFixed(2)+'</span>' +
+      '</div>' +
+      '<div class="ride-dest">📍 '+ride.destination+'</div>' +
+      '<div class="ride-meta">' +
+        '<span>🛣️ <strong>'+parseFloat(ride.distance).toFixed(1)+' km</strong></span>' +
+        '<span>⏱️ <strong>'+timeAgo(ride.timestamp)+'</strong></span>' +
+      '</div>' +
+      '<div class="ride-actions">' +
+        '<button class="btn-ac" onclick="acceptRide(\''+ride.id+'\',\''+ride.platform+'\','+isReal+')">✅ Aceitar</button>' +
+        '<button class="btn-rj" onclick="rejectRide(\''+ride.id+'\',\''+ride.platform+'\')">❌ Rejeitar</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 
-    updateMarkers(filtered);
+  updateMarkers(filtered);
 }
 
 // ── MARKERS ──
 function updateMarkers(rides) {
-    rideMarkers.forEach(m=>m.setMap(null));
-    rideMarkers = [];
-    rides.forEach(ride=>{
-        const marker = new google.maps.Marker({
-            position:{lat:ride.lat,lng:ride.lng},
-            map, icon:PLT_ICONS[ride.platform],
-            title:`${PLT_LABELS[ride.platform]} R$${parseFloat(ride.earnings).toFixed(2)}`
-        });
-        const iw = new google.maps.InfoWindow({
-            content:`<div style="padding:8px;font-size:12px;min-width:140px">
-                <strong style="color:${PLT_COLORS[ride.platform]}">${PLT_LABELS[ride.platform]}</strong>
-                ${ride.source==='real'?'<span style="background:#ea1d2c;color:#fff;padding:1px 6px;border-radius:6px;font-size:10px;margin-left:4px">REAL</span>':''}
-                <br>📍 ${ride.destination}
-                <br>💰 <strong>R$ ${parseFloat(ride.earnings).toFixed(2)}</strong>
-                <br>🛣️ ${parseFloat(ride.distance).toFixed(1)} km
-            </div>`
-        });
-        marker.addListener('click',()=>iw.open(map,marker));
-        rideMarkers.push(marker);
+  rideMarkers.forEach(function(m){m.setMap(null);});
+  rideMarkers = [];
+  rides.forEach(function(ride) {
+    const marker = new google.maps.Marker({
+      position:{lat:ride.lat,lng:ride.lng},
+      map:map,icon:PLT_ICONS[ride.platform],
+      title:PLT_LABELS[ride.platform]+' R$'+parseFloat(ride.earnings).toFixed(2)
     });
+    const iw = new google.maps.InfoWindow({
+      content:'<div style="padding:8px;font-size:12px;min-width:150px">'+
+        '<strong style="color:'+PLT_COLORS[ride.platform]+'">'+PLT_LABELS[ride.platform]+'</strong>'+
+        (ride.source==='real'?' <span style="background:#ea1d2c;color:#fff;padding:1px 6px;border-radius:6px;font-size:10px">REAL</span>':'')+
+        '<br>📍 '+ride.destination+
+        '<br>💰 <strong>R$ '+parseFloat(ride.earnings).toFixed(2)+'</strong>'+
+        '<br>🛣️ '+parseFloat(ride.distance).toFixed(1)+' km'+
+        '</div>'
+    });
+    marker.addListener('click',function(){iw.open(map,marker);});
+    rideMarkers.push(marker);
+  });
 }
 
 // ── ACEITAR ──
 function acceptRide(rideId, platform, isReal) {
-    if (isReal === 'true') {
-        const ride = allRides.find(r=>r.id===rideId);
-        pendingRealRide = {rideId,platform,ride};
-        const label = PLT_LABELS[platform];
-        document.getElementById('modalText').innerHTML =
-            `Corrida <strong>REAL do ${label}</strong>!<br>
-             💰 R$ ${parseFloat(ride?.earnings||0).toFixed(2)}<br>
-             📍 ${ride?.destination}<br><br>
-             O MacroDroid abrirá o ${label} para aceitar.`;
-        document.getElementById('modalOverlay').classList.add('show');
-        return;
-    }
-    doAccept(rideId, platform);
+  if (isReal === true || isReal === 'true') {
+    const ride = allRides.find(function(r){return r.id===rideId;});
+    pendingRealRide = {rideId:rideId,platform:platform,ride:ride};
+    const label = PLT_LABELS[platform];
+    document.getElementById('modalEarn').textContent = 'R$ '+parseFloat(ride?ride.earnings:0).toFixed(2);
+    document.getElementById('modalText').innerHTML =
+      '<strong>'+label+'</strong> — Corrida Real<br>'+
+      '📍 '+(ride?ride.destination:'')+'<br>'+
+      '🛣️ '+(ride?ride.distance:'?')+' km<br><br>'+
+      'O MacroDroid abrirá o '+label+' para aceitar.';
+    document.getElementById('modalOverlay').classList.add('show');
+    return;
+  }
+  doAccept(rideId, platform);
 }
 
 function confirmAcceptReal() {
-    if (!pendingRealRide) return;
-    closeModal();
-    doAccept(pendingRealRide.rideId, pendingRealRide.platform);
-    showToast(`🤖 Abrindo ${PLT_LABELS[pendingRealRide.platform]}...`,'info');
-    pendingRealRide = null;
+  if (!pendingRealRide) return;
+  closeModal();
+  doAccept(pendingRealRide.rideId, pendingRealRide.platform);
+  showToast('🤖 Abrindo '+PLT_LABELS[pendingRealRide.platform]+'...','info');
+  pendingRealRide = null;
 }
 
 function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('show');
-    pendingRealRide = null;
+  document.getElementById('modalOverlay').classList.remove('show');
+  pendingRealRide = null;
 }
 
 function doAccept(rideId, platform) {
-    fetch(BACKEND+'/api/accept-ride',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({rideId,platform})
-    })
-    .then(r=>r.json())
-    .then(data=>{
-        if (data.success) {
-            showToast('✅ Corrida aceita!','success');
-            if (data.isReal) showToast('🤖 MacroDroid vai aceitar no app!','info');
-            fetchRides();
-        } else {
-            showToast('❌ Erro ao aceitar','error');
-        }
-    })
-    .catch(()=>showToast('❌ Sem conexão','error'));
+  fetch(BACKEND+'/api/accept-ride',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({rideId:rideId,platform:platform})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if (data.success) {
+      showToast('✅ Corrida aceita!','success');
+      if (data.isReal) showToast('🤖 MacroDroid vai aceitar no app!','info');
+      document.getElementById('alertReal').classList.remove('show');
+      fetchRides();
+    } else {
+      showToast('❌ Erro ao aceitar','error');
+    }
+  })
+  .catch(function(){showToast('❌ Sem conexão','error');});
 }
 
 // ── REJEITAR ──
 function rejectRide(rideId, platform) {
-    fetch(BACKEND+'/api/reject-ride',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({rideId,platform})
-    })
-    .then(r=>r.json())
-    .then(data=>{
-        if (data.success) {
-            showToast('🗑️ Corrida rejeitada','info');
-            fetchRides();
-        }
-    })
-    .catch(()=>showToast('❌ Sem conexão','error'));
+  fetch(BACKEND+'/api/reject-ride',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({rideId:rideId,platform:platform})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if (data.success) {
+      showToast('🗑️ Corrida rejeitada','info');
+      fetchRides();
+    }
+  })
+  .catch(function(){showToast('❌ Sem conexão','error');});
 }
 
 // ── SALVAR CONFIG ──
 function saveConfig() {
-    const pos = userMarker.getPosition();
-    const payload = {
-        latitude:        pos.lat(),
-        longitude:       pos.lng(),
-        raioMaximo:      parseFloat(document.getElementById('raioMaximo').value),
-        ganhoMinimo:     parseFloat(document.getElementById('ganhoMinimo').value),
-        distanciaMaxima: parseFloat(document.getElementById('distanciaMaxima').value)
-    };
-    fetch(BACKEND+'/api/config',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(payload)
-    })
-    .then(r=>r.json())
-    .then(data=>{
-        if (data.success) {
-            showToast('💾 Configurações salvas!','success');
-            drawCircle({lat:payload.latitude,lng:payload.longitude});
-            renderRides();
-        }
-    })
-    .catch(()=>showToast('❌ Erro ao salvar','error'));
+  const pos = userMarker.getPosition();
+  const payload = {
+    latitude:        pos.lat(),
+    longitude:       pos.lng(),
+    raioMaximo:      parseFloat(document.getElementById('raioMaximo').value),
+    ganhoMinimo:     parseFloat(document.getElementById('ganhoMinimo').value),
+    distanciaMaxima: parseFloat(document.getElementById('distanciaMaxima').value)
+  };
+  fetch(BACKEND+'/api/config',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if (data.success) {
+      showToast('💾 Configurações salvas!','success');
+      drawCircle({lat:payload.latitude,lng:payload.longitude});
+      renderRides();
+    }
+  })
+  .catch(function(){showToast('❌ Erro ao salvar','error');});
 }
 
 // ── TOGGLE PLATAFORMA ──
 function togglePlatform(p) {
-    fetch(BACKEND+`/api/platform/${p}/toggle`,{method:'POST'})
-        .then(r=>r.json())
-        .then(data=>{
-            pltStates[p] = data.enabled;
-            const el = document.getElementById(`ptoggle-${p}`);
-            if (data.enabled) {
-                el.classList.remove('off');
-                showToast(`✅ ${PLT_LABELS[p]} ativado`,'success');
-            } else {
-                el.classList.add('off');
-                showToast(`⏸️ ${PLT_LABELS[p]} pausado`,'info');
-            }
-            renderRides();
-        })
-        .catch(()=>showToast('❌ Erro ao alternar','error'));
+  fetch(BACKEND+'/api/platform/'+p+'/toggle',{method:'POST'})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      pltStates[p] = data.enabled;
+      const el = document.getElementById('ptoggle-'+p);
+      if (data.enabled) {
+        el.classList.remove('off');
+        showToast('✅ '+PLT_LABELS[p]+' ativado','success');
+      } else {
+        el.classList.add('off');
+        showToast('⏸️ '+PLT_LABELS[p]+' pausado','info');
+      }
+      renderRides();
+    })
+    .catch(function(){showToast('❌ Erro','error');});
 }
 
 // ── STATS ──
 function updateStats() {
-    ['ifood','ubereats','keeta','loggi'].forEach(p=>{
-        const n  = allRides.filter(r=>r.platform===p&&r.status==='pending').length;
-        const sv = document.getElementById(`st-${p}`);
-        const sc = document.getElementById(`pcnt-${p}`);
-        if (sv) sv.textContent = n;
-        if (sc) sc.textContent = n;
-    });
+  ['ifood','ubereats','keeta','loggi'].forEach(function(p) {
+    const n  = allRides.filter(function(r){return r.platform===p&&r.status==='pending';}).length;
+    const sv = document.getElementById('st-'+p);
+    const sc = document.getElementById('pcnt-'+p);
+    if (sv) sv.textContent = n;
+    if (sc) sc.textContent = n;
+  });
 }
 
-// ── UTILIDADES ──
+// ── UTILITÁRIOS ──
 function timeAgo(ts) {
-    if (!ts) return '--';
-    const d = Math.floor((Date.now()-new Date(ts))/1000);
-    if (d<60)   return `${d}s atrás`;
-    if (d<3600) return `${Math.floor(d/60)}min atrás`;
-    return `${Math.floor(d/3600)}h atrás`;
+  if (!ts) return '--';
+  const d = Math.floor((Date.now()-new Date(ts))/1000);
+  if (d<60)   return d+'s atrás';
+  if (d<3600) return Math.floor(d/60)+'min atrás';
+  return Math.floor(d/3600)+'h atrás';
 }
 
 let toastTimer;
-function showToast(msg,type='info') {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = `toast ${type} show`;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=>el.classList.remove('show'),3000);
+function showToast(msg, type) {
+  type = type || 'info';
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast '+type+' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){el.classList.remove('show');},3500);
 }
 
-document.getElementById('raioMaximo').addEventListener('change',()=>{
-    drawCircle(userMarker.getPosition().toJSON());
-    renderRides();
+document.getElementById('raioMaximo').addEventListener('change',function(){
+  drawCircle(userMarker.getPosition().toJSON());
+  renderRides();
 });
-document.getElementById('ganhoMinimo').addEventListener('change', renderRides);
+document.getElementById('ganhoMinimo').addEventListener('change',renderRides);
 </script>
 </body>
 </html>
