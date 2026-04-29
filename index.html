@@ -1,610 +1,532 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeliveryHub</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQC2JCQhdB38fTrvmNz_Wbv0arXvmsR8g"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>DeliveryHub</title>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQC2JCQhdB38fTrvmNz_Wbv0arXvmsR8g&libraries=geometry&callback=initMap" async defer></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#667eea;--success:#28a745;--danger:#dc3545;
+  --ifood:#ea1d2c;--uber:#222;--keeta:#00b4d8;--loggi:#ff6b00;
+  --bg:#f0f2f5;--card:#fff;--border:#e0e0e0;--muted:#888;
+  --shadow:0 4px 18px rgba(0,0,0,.10);--radius:14px;
+}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(102,126,234,.4)}
+.header h1{font-size:18px;font-weight:800}
+.header p{font-size:11px;opacity:.85;margin-top:1px}
+.hstatus{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+.tbar{height:3px;background:#ddd}
+.tbar-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);animation:tbar 2s linear infinite;transform-origin:left}
+@keyframes tbar{0%{transform:scaleX(1)}100%{transform:scaleX(0)}}
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
+.layout{display:flex;flex:1;gap:12px;padding:12px;max-width:1400px;margin:0 auto;width:100%}
+.col-left{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
+.col-right{width:340px;display:flex;flex-direction:column;gap:12px;flex-shrink:0}
 
-        .header h1 {
-            font-size: 20px;
-            margin-bottom: 3px;
-        }
+.map-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+#map{height:300px;width:100%}
+.map-foot{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fafafa;border-top:1px solid var(--border)}
+.map-coords{font-size:11px;color:var(--muted)}
+.btn-loc{padding:8px 14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer}
 
-        .header p {
-            font-size: 12px;
-            opacity: 0.9;
-        }
+.cfg-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.cfg-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.cfg-field label{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px;text-transform:uppercase}
+.cfg-field input{width:100%;padding:9px 10px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:#fafafa}
+.cfg-field input:focus{outline:none;border-color:var(--primary)}
+.btn-save{width:100%;padding:11px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer}
 
-        .container {
-            display: flex;
-            flex: 1;
-            gap: 10px;
-            padding: 10px;
-            overflow: hidden;
-        }
+.plt-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.plt-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
+.plt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.plt-btn{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;cursor:pointer;border:2px solid transparent;background:#f8f8f8;user-select:none}
+.plt-btn.on-ifood{border-color:var(--ifood);background:#fff5f5}
+.plt-btn.on-ubereats{border-color:var(--uber);background:#f5f5f5}
+.plt-btn.on-keeta{border-color:var(--keeta);background:#f0faff}
+.plt-btn.on-loggi{border-color:var(--loggi);background:#fff8f0}
+.plt-btn.off{opacity:.4;border-color:var(--border)!important;background:#f0f0f0!important}
+.plt-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.plt-name{font-size:12px;font-weight:800;flex:1}
+.plt-cnt{font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.07);min-width:22px;text-align:center}
 
-        /* COLUNA ESQUERDA - MAPA */
-        .map-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+.stats-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat-box{text-align:center;padding:10px 6px;border-radius:10px;border-top:3px solid var(--primary);background:#f5f7ff}
+.stat-box.ifood{border-color:var(--ifood);background:#fff5f5}
+.stat-box.uber{border-color:var(--uber);background:#f5f5f5}
+.stat-box.keeta{border-color:var(--keeta);background:#f0faff}
+.stat-box.loggi{border-color:var(--loggi);background:#fff8f0}
+.stat-v{font-size:20px;font-weight:800;color:#333}
+.stat-l{font-size:10px;color:var(--muted);margin-top:3px;font-weight:700;text-transform:uppercase}
 
-        #map {
-            flex: 1;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border: 2px solid #e0e0e0;
-        }
+.rides-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+.rides-head{padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.rides-head h3{font-size:15px;font-weight:700}
+.rides-badge{background:var(--primary);color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
+.rides-list{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;max-height:500px}
 
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
+.ride-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;border-left:5px solid var(--primary);animation:slideIn .3s ease-out;position:relative}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.ride-card[data-p="ifood"]{border-left-color:var(--ifood)}
+.ride-card[data-p="ubereats"]{border-left-color:var(--uber)}
+.ride-card[data-p="keeta"]{border-left-color:var(--keeta)}
+.ride-card[data-p="loggi"]{border-left-color:var(--loggi)}
 
-        .control-group {
-            background: white;
-            padding: 12px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
+/* BADGE REAL PISCA VERMELHO — SIM fica azul */
+.badge-real{position:absolute;top:8px;right:8px;background:#ea1d2c;color:#fff;font-size:9px;font-weight:800;padding:3px 9px;border-radius:8px;animation:blink .8s infinite}
+.badge-sim{position:absolute;top:8px;right:8px;background:#667eea;color:#fff;font-size:9px;font-weight:800;padding:3px 9px;border-radius:8px}
 
-        .control-group label {
-            display: block;
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
+.ride-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-right:65px}
+.ride-plt{display:flex;align-items:center;gap:5px}
+.ride-plt-dot{width:8px;height:8px;border-radius:50%}
+.ride-plt-name{font-size:12px;font-weight:800;letter-spacing:.5px}
+.ride-earn{font-size:18px;font-weight:800;color:var(--success)}
+.ride-dest{background:#f5f7ff;border-left:3px solid var(--primary);padding:6px 10px;border-radius:0 8px 8px 0;font-size:12px;margin-bottom:8px}
+.ride-meta{display:flex;gap:12px;margin-bottom:10px}
+.ride-meta span{font-size:11px;color:var(--muted)}
+.ride-meta strong{color:#333;font-size:12px}
+.ride-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.btn-ac,.btn-rj{padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
+.btn-ac{background:var(--success);color:#fff}
+.btn-rj{background:var(--danger);color:#fff}
 
-        .control-group input {
-            width: 100%;
-            padding: 8px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 13px;
-        }
+.empty{text-align:center;color:var(--muted);padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty-icon{font-size:42px;opacity:.4}
 
-        .control-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
+/* ALERTA TOPO — corrida real */
+.alert-real{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#ea1d2c;color:#fff;padding:14px 24px;border-radius:14px;font-weight:800;font-size:14px;box-shadow:0 8px 30px rgba(234,29,44,.5);z-index:9997;display:none;text-align:center;width:90%;max-width:360px}
+.alert-real.show{display:block;animation:blink .6s infinite}
 
-        .btn-location {
-            width: 100%;
-            padding: 10px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.3s;
-        }
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:var(--radius);padding:24px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
+.modal-icon{font-size:48px;margin-bottom:12px}
+.modal h2{font-size:20px;margin-bottom:8px}
+.modal-earn{font-size:30px;font-weight:800;color:var(--success);margin:10px 0}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-modal-ok{padding:14px;background:var(--success);color:#fff;border:none;border-radius:8px;font-weight:800;font-size:15px;cursor:pointer}
+.btn-modal-cancel{padding:14px;background:#eee;color:#333;border:none;border-radius:8px;font-weight:700;font-size:15px;cursor:pointer}
 
-        .btn-location:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-        }
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);padding:12px 22px;background:#333;color:#fff;border-radius:30px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--danger)}
+.toast.info{background:var(--primary)}
+.toast.real{background:#ea1d2c}
 
-        /* COLUNA DIREITA - CORRIDAS */
-        .rides-section {
-            width: 320px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background: white;
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .rides-header {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        .rides-list {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .ride-card {
-            background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-left: 4px solid #667eea;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .ride-card:hover {
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .ride-card.ifood {
-            border-left-color: #ea1d2c;
-        }
-
-        .ride-card.uber {
-            border-left-color: #000000;
-        }
-
-        .ride-card.keeta {
-            border-left-color: #00d4ff;
-        }
-
-        .ride-card.loggi {
-            border-left-color: #ff6b00;
-        }
-
-        .ride-platform {
-            font-weight: bold;
-            font-size: 13px;
-            color: #333;
-            margin-bottom: 6px;
-        }
-
-        .ride-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 8px;
-            font-size: 12px;
-        }
-
-        .ride-info-item {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .ride-info-label {
-            color: #999;
-        }
-
-        .ride-info-value {
-            color: #333;
-            font-weight: bold;
-        }
-
-        .ride-destination {
-            background: #f0f4ff;
-            padding: 6px;
-            border-radius: 6px;
-            font-size: 12px;
-            color: #333;
-            margin-bottom: 8px;
-            border-left: 3px solid #667eea;
-        }
-
-        .ride-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-        }
-
-        .btn-accept {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-accept:hover {
-            background: #218838;
-            transform: scale(1.05);
-        }
-
-        .btn-reject {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-reject:hover {
-            background: #c82333;
-            transform: scale(1.05);
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #999;
-            padding: 40px 20px;
-            font-size: 14px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .stat {
-            background: #f0f4ff;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            border-left: 3px solid #667eea;
-        }
-
-        .stat-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: #999;
-            margin-top: 3px;
-        }
-
-        .message {
-            position: fixed;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 20px;
-            background: #28a745;
-            color: white;
-            border-radius: 8px;
-            font-size: 13px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            display: none;
-            z-index: 1000;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -20px);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, 0);
-            }
-        }
-
-        .message.show {
-            display: block;
-        }
-
-        @media (max-width: 1024px) {
-            .container {
-                flex-direction: column;
-            }
-
-            .rides-section {
-                width: 100%;
-                max-height: 300px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .controls {
-                grid-template-columns: 1fr;
-            }
-
-            .rides-section {
-                width: 100%;
-                max-height: 250px;
-            }
-        }
-    </style>
+@media(max-width:960px){.layout{flex-direction:column}.col-right{width:100%}#map{height:240px}}
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>🚗 DeliveryHub</h1>
-        <p>Monitor de Corridas em Tempo Real</p>
+
+<div class="alert-real" id="alertReal">🚨 CORRIDA REAL!</div>
+
+<div class="header">
+  <div><h1>🚗 DeliveryHub</h1><p>Monitor em Tempo Real</p></div>
+  <div class="hstatus"><div class="dot"></div><span id="hstatusText">Online</span></div>
+</div>
+<div class="tbar"><div class="tbar-fill"></div></div>
+
+<div class="layout">
+  <div class="col-left">
+
+    <div class="map-card">
+      <div id="map"></div>
+      <div class="map-foot">
+        <span class="map-coords" id="mapCoords">📍 Santo André, SP</span>
+        <button class="btn-loc" onclick="getLocation()">📍 Minha Localização</button>
+      </div>
     </div>
 
-    <div class="container">
-        <!-- MAPA -->
-        <div class="map-section">
-            <div id="map"></div>
-
-            <div class="controls">
-                <div class="control-group">
-                    <label>Raio (km)</label>
-                    <input type="number" id="raioMaximo" value="5" min="1" max="50" onchange="updateMap()">
-                </div>
-                <div class="control-group">
-                    <label>Ganho Mín (R$)</label>
-                    <input type="number" id="ganhoMinimo" value="15" min="0" step="0.50" onchange="filterRides()">
-                </div>
-            </div>
-
-            <button class="btn-location" onclick="getLocation()">📍 Minha Localização</button>
-        </div>
-
-        <!-- CORRIDAS -->
-        <div class="rides-section">
-            <div class="rides-header">📦 Corridas</div>
-
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-value" id="totalRides">0</div>
-                    <div class="stat-label">Total</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value" id="pendingRides">0</div>
-                    <div class="stat-label">Pendentes</div>
-                </div>
-            </div>
-
-            <div class="rides-list" id="ridesList">
-                <div class="empty-state">Aguardando corridas...</div>
-            </div>
-        </div>
+    <div class="cfg-card">
+      <h3>⚙️ Filtros</h3>
+      <div class="cfg-grid">
+        <div class="cfg-field"><label>Raio (km)</label><input type="number" id="raioMaximo" value="5" min="1" max="50" step="0.5"></div>
+        <div class="cfg-field"><label>Ganho Mín (R$)</label><input type="number" id="ganhoMinimo" value="15" min="0" step="0.5"></div>
+        <div class="cfg-field"><label>Dist. Máx (km)</label><input type="number" id="distanciaMaxima" value="10" min="1" max="100"></div>
+        <div class="cfg-field"><label>Latitude</label><input type="number" id="latInput" value="-23.6821" step="0.0001"></div>
+      </div>
+      <button class="btn-save" onclick="saveConfig()">💾 Salvar Configurações</button>
     </div>
 
-    <div class="message" id="message"></div>
+    <div class="plt-card">
+      <h3>📱 Plataformas</h3>
+      <div class="plt-grid">
+        <div class="plt-btn on-ifood" id="ptoggle-ifood" onclick="togglePlatform('ifood')">
+          <div class="plt-dot" style="background:var(--ifood)"></div>
+          <span class="plt-name" style="color:var(--ifood)">iFood</span>
+          <span class="plt-cnt" id="pcnt-ifood">0</span>
+        </div>
+        <div class="plt-btn on-ubereats" id="ptoggle-ubereats" onclick="togglePlatform('ubereats')">
+          <div class="plt-dot" style="background:var(--uber)"></div>
+          <span class="plt-name" style="color:var(--uber)">Uber Eats</span>
+          <span class="plt-cnt" id="pcnt-ubereats">0</span>
+        </div>
+        <div class="plt-btn on-keeta" id="ptoggle-keeta" onclick="togglePlatform('keeta')">
+          <div class="plt-dot" style="background:var(--keeta)"></div>
+          <span class="plt-name" style="color:var(--keeta)">Keeta</span>
+          <span class="plt-cnt" id="pcnt-keeta">0</span>
+        </div>
+        <div class="plt-btn on-loggi" id="ptoggle-loggi" onclick="togglePlatform('loggi')">
+          <div class="plt-dot" style="background:var(--loggi)"></div>
+          <span class="plt-name" style="color:var(--loggi)">Loggi</span>
+          <span class="plt-cnt" id="pcnt-loggi">0</span>
+        </div>
+      </div>
+    </div>
 
-    <script>
-        let map;
-        let userMarker;
-        let rideMarkers = [];
-        let circle;
-        let allRides = [];
-        let filteredRides = [];
+  </div>
 
-        function initMap() {
-            const defaultLat = -23.5505;
-            const defaultLng = -46.6333;
+  <div class="col-right">
 
-            map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 14,
-                center: { lat: defaultLat, lng: defaultLng },
-                mapTypeControl: false,
-                fullscreenControl: true,
-                zoomControl: true,
-                streetViewControl: false
-            });
+    <div class="stats-card">
+      <div class="stats-grid">
+        <div class="stat-box ifood"><div class="stat-v" id="st-ifood">0</div><div class="stat-l">iFood</div></div>
+        <div class="stat-box uber"><div class="stat-v" id="st-ubereats">0</div><div class="stat-l">Uber</div></div>
+        <div class="stat-box keeta"><div class="stat-v" id="st-keeta">0</div><div class="stat-l">Keeta</div></div>
+        <div class="stat-box loggi"><div class="stat-v" id="st-loggi">0</div><div class="stat-l">Loggi</div></div>
+      </div>
+    </div>
 
-            userMarker = new google.maps.Marker({
-                position: { lat: defaultLat, lng: defaultLng },
-                map: map,
-                title: 'Sua Localização',
-                icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
-            });
+    <div class="rides-card">
+      <div class="rides-head">
+        <h3>📦 Corridas</h3>
+        <span class="rides-badge" id="ridesBadge">0</span>
+      </div>
+      <div class="rides-list" id="ridesList">
+        <div class="empty"><span class="empty-icon">🛵</span><span>Aguardando corridas...</span></div>
+      </div>
+    </div>
 
-            updateMap();
-            getLocation();
-            fetchRides();
-            setInterval(fetchRides, 2000);
-        }
+  </div>
+</div>
 
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
+<!-- MODAL CORRIDA REAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-icon">🚨</div>
+    <h2>Corrida REAL!</h2>
+    <div class="modal-earn" id="modalEarn">R$ 0,00</div>
+    <p id="modalText">Confirmar aceitação?</p>
+    <div class="modal-btns">
+      <button class="btn-modal-ok" onclick="confirmAcceptReal()">✅ ACEITAR</button>
+      <button class="btn-modal-cancel" onclick="closeModal()">❌ Recusar</button>
+    </div>
+  </div>
+</div>
 
-                        userMarker.setPosition({ lat, lng });
-                        map.setCenter({ lat, lng });
-                        updateMap();
-                        showMessage('✅ Localização obtida!');
-                    },
-                    function(error) {
-                        console.error('Erro:', error);
-                    }
-                );
-            }
-        }
+<div class="toast" id="toast"></div>
 
-        function updateMap() {
-            const lat = userMarker.getPosition().lat();
-            const lng = userMarker.getPosition().lng();
-            const raio = parseFloat(document.getElementById('raioMaximo').value);
+<script>
+var BACKEND  = '';
+var POLL_MS  = 2000;
+var PLT_COLORS = {ifood:'#ea1d2c',ubereats:'#222222',keeta:'#00b4d8',loggi:'#ff6b00'};
+var PLT_LABELS = {ifood:'iFood',ubereats:'Uber Eats',keeta:'Keeta',loggi:'Loggi'};
+var PLT_ICONS  = {
+  ifood:   'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+  ubereats:'http://maps.google.com/mapfiles/ms/icons/purple-dot.png',
+  keeta:   'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+  loggi:   'http://maps.google.com/mapfiles/ms/icons/orange-dot.png'
+};
 
-            if (circle) circle.setMap(null);
+var map, userMarker, circle;
+var rideMarkers     = [];
+var allRides        = [];
+var pltStates       = {ifood:true,ubereats:true,keeta:true,loggi:true};
+var pendingRealRide = null;
+var alertTimer;
+var hadRealBefore   = false;
 
-            circle = new google.maps.Circle({
-                center: { lat, lng },
-                radius: raio * 1000,
-                map: map,
-                fillColor: '#667eea',
-                fillOpacity: 0.15,
-                strokeColor: '#667eea',
-                strokeOpacity: 0.6,
-                strokeWeight: 2
-            });
+function initMap() {
+  var pos = {lat:-23.6821,lng:-46.5650};
+  map = new google.maps.Map(document.getElementById('map'),{
+    zoom:14,center:pos,
+    mapTypeControl:false,fullscreenControl:false,streetViewControl:false
+  });
+  userMarker = new google.maps.Marker({
+    position:pos,map:map,title:'Voce',
+    icon:{path:google.maps.SymbolPath.CIRCLE,scale:10,fillColor:'#667eea',fillOpacity:1,strokeColor:'#fff',strokeWeight:3},
+    zIndex:999
+  });
+  drawCircle(pos);
+  getLocation();
+  fetchRides();
+  setInterval(fetchRides, POLL_MS);
+}
 
-            filterRides();
-        }
+function getLocation() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    var lat = pos.coords.latitude;
+    var lng = pos.coords.longitude;
+    userMarker.setPosition({lat:lat,lng:lng});
+    map.panTo({lat:lat,lng:lng});
+    map.setZoom(14);
+    document.getElementById('latInput').value = lat.toFixed(6);
+    document.getElementById('mapCoords').textContent = '📍 ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
+    drawCircle({lat:lat,lng:lng});
+    showToast('📍 Localizacao obtida!','success');
+  }, function(){}, {enableHighAccuracy:true,timeout:10000});
+}
 
-        function fetchRides() {
-            fetch('/api/rides')
-                .then(response => response.json())
-                .then(data => {
-                    allRides = data;
-                    filterRides();
-                })
-                .catch(error => console.error('Erro:', error));
-        }
+function drawCircle(center) {
+  if (circle) circle.setMap(null);
+  var r = parseFloat(document.getElementById('raioMaximo').value) || 5;
+  circle = new google.maps.Circle({
+    center:center,radius:r*1000,map:map,
+    fillColor:'#667eea',fillOpacity:.10,
+    strokeColor:'#667eea',strokeOpacity:.5,strokeWeight:2
+  });
+}
 
-        function filterRides() {
-            const ganhoMinimo = parseFloat(document.getElementById('ganhoMinimo').value);
-            const lat = userMarker.getPosition().lat();
-            const lng = userMarker.getPosition().lng();
-            const raio = parseFloat(document.getElementById('raioMaximo').value);
+function fetchRides() {
+  fetch(BACKEND+'/api/rides')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var hasRealNow = data.some(function(r){return r.source==='real'&&r.status==='pending';});
 
-            filteredRides = allRides.filter(ride => {
-                const distance = google.maps.geometry.spherical.computeDistanceBetween(
-                    new google.maps.LatLng(lat, lng),
-                    new google.maps.LatLng(ride.lat, ride.lng)
-                ) / 1000;
+      // Detecta nova corrida real
+      if (hasRealNow && !hadRealBefore) {
+        var realRide = data.find(function(r){return r.source==='real'&&r.status==='pending';});
+        if (realRide) triggerRealAlert(realRide);
+      }
+      hadRealBefore = hasRealNow;
 
-                return ride.earnings >= ganhoMinimo && distance <= raio && ride.status === 'pending';
-            });
+      allRides = data;
+      renderRides();
+      updateStats();
+      document.getElementById('hstatusText').textContent = 'Online';
+    })
+    .catch(function(){
+      document.getElementById('hstatusText').textContent = 'Offline';
+    });
+}
 
-            displayRides();
-            updateMarkers();
-            updateStats();
-        }
+function triggerRealAlert(ride) {
+  var el = document.getElementById('alertReal');
+  el.textContent = '🚨 CORRIDA REAL! R$ ' + parseFloat(ride.earnings).toFixed(2) + ' — ' + PLT_LABELS[ride.platform];
+  el.classList.add('show');
+  clearTimeout(alertTimer);
+  alertTimer = setTimeout(function(){ el.classList.remove('show'); }, 10000);
+  if (navigator.vibrate) navigator.vibrate([400,100,400,100,400]);
+  showToast('🚨 REAL: R$ '+parseFloat(ride.earnings).toFixed(2)+' — '+PLT_LABELS[ride.platform],'real');
+}
 
-        function displayRides() {
-            const container = document.getElementById('ridesList');
+function getFiltered() {
+  var ganhoMin = parseFloat(document.getElementById('ganhoMinimo').value)||0;
+  var raio     = parseFloat(document.getElementById('raioMaximo').value)||5;
+  var upos     = userMarker.getPosition();
+  return allRides.filter(function(ride) {
+    if (ride.status !== 'pending') return false;
+    if (!pltStates[ride.platform]) return false;
+    if (parseFloat(ride.earnings) < ganhoMin) return false;
+    var dist = google.maps.geometry.spherical.computeDistanceBetween(
+      upos, new google.maps.LatLng(ride.lat, ride.lng)
+    )/1000;
+    return dist <= raio;
+  });
+}
 
-            if (filteredRides.length === 0) {
-                container.innerHTML = '<div class="empty-state">Nenhuma corrida disponível</div>';
-                return;
-            }
+function renderRides() {
+  var filtered  = getFiltered();
+  var container = document.getElementById('ridesList');
+  document.getElementById('ridesBadge').textContent = filtered.length;
 
-            container.innerHTML = filteredRides.map(ride => `
-                <div class="ride-card ${ride.platform}">
-                    <div class="ride-platform">${ride.platform.toUpperCase()}</div>
-                    <div class="ride-info">
-                        <div class="ride-info-item">
-                            <span class="ride-info-label">Distância</span>
-                            <span class="ride-info-value">${ride.distance.toFixed(1)}km</span>
-                        </div>
-                        <div class="ride-info-item">
-                            <span class="ride-info-label">Ganho</span>
-                            <span class="ride-info-value">R$${ride.earnings.toFixed(0)}</span>
-                        </div>
-                    </div>
-                    <div class="ride-destination">📍 ${ride.destination}</div>
-                    <div class="ride-actions">
-                        <button class="btn-accept" onclick="acceptRide('${ride.id}', '${ride.platform}')">✅ Aceitar</button>
-                        <button class="btn-reject" onclick="rejectRide('${ride.id}', '${ride.platform}')">❌ Rejeitar</button>
-                    </div>
-                </div>
-            `).join('');
-        }
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty"><span class="empty-icon">🛵</span><span>Aguardando corridas...</span></div>';
+    updateMarkers([]);
+    return;
+  }
 
-        function updateMarkers() {
-            rideMarkers.forEach(marker => marker.setMap(null));
-            rideMarkers = [];
+  var html = '';
+  for (var i = 0; i < filtered.length; i++) {
+    var ride   = filtered[i];
+    var c      = PLT_COLORS[ride.platform] || '#667eea';
+    var l      = PLT_LABELS[ride.platform] || ride.platform;
+    var isReal = ride.source === 'real';
+    html += '<div class="ride-card" data-p="'+ride.platform+'">' +
+      (isReal ? '<div class="badge-real">🔴 REAL</div>' : '<div class="badge-sim">🔵 SIM</div>') +
+      '<div class="ride-top">' +
+        '<div class="ride-plt">' +
+          '<div class="ride-plt-dot" style="background:'+c+'"></div>' +
+          '<span class="ride-plt-name" style="color:'+c+'">'+l.toUpperCase()+'</span>' +
+        '</div>' +
+        '<span class="ride-earn">R$ '+parseFloat(ride.earnings).toFixed(2)+'</span>' +
+      '</div>' +
+      '<div class="ride-dest">📍 '+ride.destination+'</div>' +
+      '<div class="ride-meta"><span>🛣️ <strong>'+parseFloat(ride.distance).toFixed(1)+' km</strong></span><span>⏱️ <strong>'+timeAgo(ride.timestamp)+'</strong></span></div>' +
+      '<div class="ride-actions">' +
+        '<button class="btn-ac" onclick="acceptRide(\''+ride.id+'\',\''+ride.platform+'\','+isReal+')">✅ Aceitar</button>' +
+        '<button class="btn-rj" onclick="rejectRide(\''+ride.id+'\',\''+ride.platform+'\')">❌ Rejeitar</button>' +
+      '</div></div>';
+  }
+  container.innerHTML = html;
+  updateMarkers(filtered);
+}
 
-            const colors = {
-                ifood: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
-                uber: 'http://maps.google.com/mapfiles/ms/icons/black-dot.png',
-                keeta: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-                loggi: 'http://maps.google.com/mapfiles/ms/icons/orange-dot.png'
-            };
+function updateMarkers(rides) {
+  for (var i = 0; i < rideMarkers.length; i++) rideMarkers[i].setMap(null);
+  rideMarkers = [];
+  for (var i = 0; i < rides.length; i++) {
+    var ride = rides[i];
+    var marker = new google.maps.Marker({
+      position:{lat:ride.lat,lng:ride.lng},
+      map:map,icon:PLT_ICONS[ride.platform],
+      title:PLT_LABELS[ride.platform]+' R$'+parseFloat(ride.earnings).toFixed(2)
+    });
+    (function(m, r){
+      var iw = new google.maps.InfoWindow({
+        content:'<div style="padding:8px;font-size:12px">'+
+          '<strong style="color:'+PLT_COLORS[r.platform]+'">'+PLT_LABELS[r.platform]+'</strong>'+
+          (r.source==='real'?' <span style="background:#ea1d2c;color:#fff;padding:1px 5px;border-radius:4px;font-size:10px">REAL</span>':'')+
+          '<br>📍 '+r.destination+
+          '<br>💰 R$ '+parseFloat(r.earnings).toFixed(2)+
+          '<br>🛣️ '+parseFloat(r.distance).toFixed(1)+' km</div>'
+      });
+      m.addListener('click',function(){iw.open(map,m);});
+    })(marker, ride);
+    rideMarkers.push(marker);
+  }
+}
 
-            filteredRides.forEach(ride => {
-                const marker = new google.maps.Marker({
-                    position: { lat: ride.lat, lng: ride.lng },
-                    map: map,
-                    icon: colors[ride.platform],
-                    title: `${ride.platform} - R$${ride.earnings.toFixed(0)}`
-                });
+function acceptRide(rideId, platform, isReal) {
+  if (isReal === true || isReal === 'true') {
+    var ride = null;
+    for (var i = 0; i < allRides.length; i++) {
+      if (allRides[i].id === rideId) { ride = allRides[i]; break; }
+    }
+    pendingRealRide = {rideId:rideId,platform:platform,ride:ride};
+    document.getElementById('modalEarn').textContent = 'R$ '+parseFloat(ride?ride.earnings:0).toFixed(2);
+    document.getElementById('modalText').innerHTML =
+      '<strong>'+PLT_LABELS[platform]+'</strong><br>'+
+      '📍 '+(ride?ride.destination:'')+
+      '<br>🛣️ '+(ride?ride.distance:'?')+' km<br><br>'+
+      'MacroDroid vai aceitar no app!';
+    document.getElementById('modalOverlay').classList.add('show');
+    return;
+  }
+  doAccept(rideId, platform);
+}
 
-                marker.addListener('click', () => {
-                    new google.maps.InfoWindow({
-                        content: `<div style="padding:8px;font-size:12px"><strong>${ride.platform.toUpperCase()}</strong><br>📍 ${ride.destination}<br>💰 R$${ride.earnings.toFixed(2)}</div>`
-                    }).open(map, marker);
-                });
+function confirmAcceptReal() {
+  if (!pendingRealRide) return;
+  closeModal();
+  doAccept(pendingRealRide.rideId, pendingRealRide.platform);
+  showToast('🤖 Abrindo '+PLT_LABELS[pendingRealRide.platform]+'...','info');
+  pendingRealRide = null;
+}
 
-                rideMarkers.push(marker);
-            });
-        }
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  pendingRealRide = null;
+}
 
-        function acceptRide(rideId, platform) {
-            fetch('/api/accept-ride', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rideId, platform })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showMessage('✅ Corrida aceita!');
-                    fetchRides();
-                }
-            });
-        }
+function doAccept(rideId, platform) {
+  fetch(BACKEND+'/api/accept-ride',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({rideId:rideId,platform:platform})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if (data.success) {
+      showToast('✅ Corrida aceita!','success');
+      document.getElementById('alertReal').classList.remove('show');
+      hadRealBefore = false;
+      fetchRides();
+    } else {
+      showToast('❌ Erro ao aceitar','error');
+    }
+  })
+  .catch(function(){showToast('❌ Sem conexao','error');});
+}
 
-        function rejectRide(rideId, platform) {
-            fetch('/api/reject-ride', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rideId, platform })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    fetchRides();
-                }
-            });
-        }
+function rejectRide(rideId, platform) {
+  fetch(BACKEND+'/api/reject-ride',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({rideId:rideId,platform:platform})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if (data.success) { showToast('🗑️ Rejeitada','info'); fetchRides(); }
+  });
+}
 
-        function updateStats() {
-            document.getElementById('totalRides').textContent = filteredRides.length;
-            document.getElementById('pendingRides').textContent = filteredRides.filter(r => r.status === 'pending').length;
-        }
+function saveConfig() {
+  var pos = userMarker.getPosition();
+  fetch(BACKEND+'/api/config',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      latitude:pos.lat(),longitude:pos.lng(),
+      raioMaximo:parseFloat(document.getElementById('raioMaximo').value),
+      ganhoMinimo:parseFloat(document.getElementById('ganhoMinimo').value),
+      distanciaMaxima:parseFloat(document.getElementById('distanciaMaxima').value)
+    })
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if (data.success) {
+      showToast('💾 Salvo!','success');
+      drawCircle({lat:userMarker.getPosition().lat(),lng:userMarker.getPosition().lng()});
+    }
+  });
+}
 
-        function showMessage(text) {
-            const msg = document.getElementById('message');
-            msg.textContent = text;
-            msg.classList.add('show');
-            setTimeout(() => msg.classList.remove('show'), 3000);
-        }
+function togglePlatform(p) {
+  fetch(BACKEND+'/api/platform/'+p+'/toggle',{method:'POST'})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      pltStates[p] = data.enabled;
+      var el = document.getElementById('ptoggle-'+p);
+      if (data.enabled) { el.classList.remove('off'); showToast('✅ '+PLT_LABELS[p]+' ativo','success'); }
+      else { el.classList.add('off'); showToast('⏸️ '+PLT_LABELS[p]+' pausado','info'); }
+      renderRides();
+    });
+}
 
-        window.addEventListener('load', initMap);
-    </script>
+function updateStats() {
+  ['ifood','ubereats','keeta','loggi'].forEach(function(p) {
+    var n = 0;
+    for (var i = 0; i < allRides.length; i++) {
+      if (allRides[i].platform===p && allRides[i].status==='pending') n++;
+    }
+    var sv = document.getElementById('st-'+p);
+    var sc = document.getElementById('pcnt-'+p);
+    if (sv) sv.textContent = n;
+    if (sc) sc.textContent = n;
+  });
+}
+
+function timeAgo(ts) {
+  if (!ts) return '--';
+  var d = Math.floor((Date.now()-new Date(ts))/1000);
+  if (d<60) return d+'s atras';
+  if (d<3600) return Math.floor(d/60)+'min atras';
+  return Math.floor(d/3600)+'h atras';
+}
+
+var toastTimer;
+function showToast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast '+(type||'info')+' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){el.classList.remove('show');},3500);
+}
+
+document.getElementById('raioMaximo').addEventListener('change',function(){
+  drawCircle(userMarker.getPosition().toJSON());
+  renderRides();
+});
+document.getElementById('ganhoMinimo').addEventListener('change',renderRides);
+</script>
 </body>
 </html>
