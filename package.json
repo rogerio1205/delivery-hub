@@ -1,20 +1,17 @@
 {
-  "name": "deliveryhub",
+  "name": "delivery-hub",
   "version": "1.0.0",
-  "description": "Monitor de corridas em tempo real - DeliveryHub",
+  "description": "Monitor Multi-Plataforma para Entregadores",
   "main": "backend.js",
   "scripts": {
     "start": "node backend.js",
-    "dev": "nodemon backend.js"
+    "dev": "node backend.js"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.2"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=14.0.0"
   }
 }
