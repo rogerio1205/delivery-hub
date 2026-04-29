@@ -8,8 +8,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
 var userPreferences = {
-    latitude: -23.6821,
-    longitude: -46.5650,
+    latitude: -23.6722,
+    longitude: -46.6072,
     raioMaximo: 5,
     ganhoMinimo: 5,
     distanciaMaxima: 10
@@ -34,7 +34,7 @@ app.get('/api/config', function(req, res) {
 
 app.post('/api/config', function(req, res) {
     userPreferences = Object.assign({}, userPreferences, req.body);
-    console.log('Config atualizada');
+    console.log('Config atualizada:', JSON.stringify(userPreferences));
     res.json({ success: true });
 });
 
@@ -48,9 +48,9 @@ app.post('/api/notification', function(req, res) {
     var packageName = req.body.packageName;
 
     console.log('=== NOTIFICACAO RECEBIDA ===');
-    console.log('Package: ' + (packageName || platform));
-    console.log('Titulo: ' + title);
-    console.log('Texto: ' + text);
+    console.log('Package: ' + (packageName || platform || 'vazio'));
+    console.log('Titulo: ' + (title || 'vazio'));
+    console.log('Texto: ' + (text || 'vazio'));
 
     var packageMap = {
         'br.com.brainweb.ifood': 'ifood',
@@ -61,6 +61,7 @@ app.post('/api/notification', function(req, res) {
     };
 
     var detectedPlatform = platform;
+
     if (!detectedPlatform && packageName) {
         detectedPlatform = packageMap[packageName];
         if (!detectedPlatform) {
@@ -71,7 +72,7 @@ app.post('/api/notification', function(req, res) {
             else if (pkg.indexOf('loggi') >= 0) detectedPlatform = 'loggi';
             else {
                 console.log('App ignorado: ' + packageName);
-                return res.json({ success: false, reason: 'App nao e plataforma de delivery' });
+                return res.json({ success: false, reason: 'App nao e delivery' });
             }
         }
     }
@@ -83,33 +84,24 @@ app.post('/api/notification', function(req, res) {
 
     var fullText = (title || '') + ' ' + (text || '');
 
-    // Extrair valor R$
     var moneyMatch = fullText.match(/R\$\s*(\d+[,.]?\d*)/i);
     var earnings   = moneyMatch ? parseFloat(moneyMatch[1].replace(',', '.')) : null;
 
-    // Extrair distancia km
-    var distMatch = fullText.match(/(\d+[,.]?\d*)\s*km/i);
-    var distance  = distMatch
-        ? parseFloat(distMatch[1].replace(',', '.'))
-        : 2.0;
+    var distMatch  = fullText.match(/(\d+[,.]?\d*)\s*km/i);
+    var distance   = distMatch ? parseFloat(distMatch[1].replace(',', '.')) : 2.0;
 
-    // Verificar ganho minimo
     if (earnings !== null && earnings < (userPreferences.ganhoMinimo || 0)) {
-        console.log('Ignorado: R$' + earnings + ' abaixo do minimo R$' + userPreferences.ganhoMinimo);
+        console.log('Ignorado: R$' + earnings + ' < minimo R$' + userPreferences.ganhoMinimo);
         return res.json({ success: false, reason: 'Abaixo do ganho minimo' });
     }
 
-    // Destino
     var destination = 'Verificar no app';
-    if (text && text.length > 0) {
-        destination = text.substring(0, 120).trim();
-    } else if (title && title.length > 0) {
-        destination = title.substring(0, 120).trim();
-    }
+    if (text && text.length > 0)        destination = text.substring(0, 150).trim();
+    else if (title && title.length > 0) destination = title.substring(0, 150).trim();
 
     var spread = (userPreferences.raioMaximo || 5) / 111 / 2;
-    var lat = (userPreferences.latitude  || -23.6821) + (Math.random() - 0.5) * spread;
-    var lng = (userPreferences.longitude || -46.5650) + (Math.random() - 0.5) * spread;
+    var lat    = (userPreferences.latitude  || -23.6722) + (Math.random() - 0.5) * spread;
+    var lng    = (userPreferences.longitude || -46.6072) + (Math.random() - 0.5) * spread;
 
     var newRide = {
         id:          detectedPlatform + '-' + Date.now(),
@@ -128,8 +120,8 @@ app.post('/api/notification', function(req, res) {
 
     if (activePlatforms[detectedPlatform]) {
         activePlatforms[detectedPlatform].rides.push(newRide);
-        console.log('✅ CORRIDA ADICIONADA: ' + detectedPlatform + ' R$' + newRide.earnings);
-        console.log('Total rides ' + detectedPlatform + ': ' + activePlatforms[detectedPlatform].rides.length);
+        console.log('✅ CORRIDA REAL: ' + detectedPlatform + ' R$' + newRide.earnings + ' — ' + destination.substring(0,50));
+        console.log('Total ' + detectedPlatform + ': ' + activePlatforms[detectedPlatform].rides.length);
         res.json({ success: true, ride: newRide });
     } else {
         res.json({ success: false, reason: 'Plataforma desabilitada' });
@@ -153,7 +145,7 @@ app.get('/api/rides', function(req, res) {
     allRides.sort(function(a, b) {
         return parseFloat(b.earnings) - parseFloat(a.earnings);
     });
-    console.log('GET /api/rides → ' + allRides.length + ' corridas');
+    console.log('GET /api/rides → ' + allRides.length + ' corridas pendentes');
     res.json(allRides);
 });
 
@@ -173,7 +165,10 @@ app.post('/api/accept-ride', function(req, res) {
     }
     if (ride) {
         ride.status = 'accepted';
-        pendingAcceptCommands.push({ rideId: rideId, platform: platform, timestamp: new Date(), executed: false });
+        pendingAcceptCommands.push({
+            rideId: rideId, platform: platform,
+            timestamp: new Date(), executed: false
+        });
         console.log('Aceita: ' + rideId);
         res.json({ success: true, isReal: true });
     } else {
@@ -214,6 +209,7 @@ app.post('/api/platform/:platform/toggle', function(req, res) {
     var platform = req.params.platform;
     if (activePlatforms[platform]) {
         activePlatforms[platform].enabled = !activePlatforms[platform].enabled;
+        console.log(platform + ': ' + (activePlatforms[platform].enabled ? 'ON' : 'OFF'));
         res.json({ success: true, enabled: activePlatforms[platform].enabled });
     } else {
         res.json({ success: false });
@@ -224,13 +220,13 @@ app.get('/api/stats', function(req, res) {
     var stats = {};
     Object.keys(activePlatforms).forEach(function(platform) {
         var rides = activePlatforms[platform].rides;
-        var p=0, a=0, r=0;
-        for (var i=0; i<rides.length; i++) {
-            if (rides[i].status==='pending')  p++;
-            if (rides[i].status==='accepted') a++;
-            if (rides[i].status==='rejected') r++;
+        var p=0,a=0,r=0;
+        for (var i=0;i<rides.length;i++){
+            if(rides[i].status==='pending')  p++;
+            if(rides[i].status==='accepted') a++;
+            if(rides[i].status==='rejected') r++;
         }
-        stats[platform] = { total: rides.length, pending: p, accepted: a, rejected: r };
+        stats[platform]={total:rides.length,pending:p,accepted:a,rejected:r};
     });
     res.json(stats);
 });
@@ -239,24 +235,22 @@ app.get('/api/stats', function(req, res) {
 setInterval(function() {
     var cutoff = Date.now() - (10 * 60 * 1000);
     Object.keys(activePlatforms).forEach(function(platform) {
-        var antes = activePlatforms[platform].rides.length;
         activePlatforms[platform].rides = activePlatforms[platform].rides.filter(function(r) {
             return r.status === 'pending' || new Date(r.timestamp).getTime() > cutoff;
         });
-        var depois = activePlatforms[platform].rides.length;
-        if (antes !== depois) console.log('Limpeza ' + platform + ': ' + antes + ' → ' + depois);
     });
     pendingAcceptCommands = pendingAcceptCommands.filter(function(c) {
         return new Date(c.timestamp).getTime() > (Date.now() - 30000);
     });
+    console.log('Limpeza: ' + new Date().toLocaleTimeString('pt-BR'));
 }, 600000);
 
 var PORT = process.env.PORT || 3000;
 app.listen(PORT, function() {
     console.log('=====================================');
-    console.log('DeliveryHub rodando na porta ' + PORT);
+    console.log('DeliveryHub porta: ' + PORT);
     console.log('MODO: SOMENTE CORRIDAS REAIS');
     console.log('SEM SIMULADOR');
-    console.log('Endpoint POST /api/notification ATIVO');
+    console.log('POST /api/notification — ATIVO');
     console.log('=====================================');
 });
