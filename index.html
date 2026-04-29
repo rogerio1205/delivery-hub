@@ -37,7 +37,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
 
 .cfg-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
 .cfg-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
-/* CORRIGIDO: grid 3 colunas para caber lat e lng */
 .cfg-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
 .cfg-field label{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px;text-transform:uppercase}
 .cfg-field input{width:100%;padding:9px 10px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:#fafafa}
@@ -100,11 +99,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
 .empty{text-align:center;color:var(--muted);padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:10px}
 .empty-icon{font-size:42px;opacity:.4}
 
-/* Alerta corrida real no topo */
 .alert-real{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#ea1d2c;color:#fff;padding:14px 24px;border-radius:14px;font-weight:800;font-size:14px;box-shadow:0 8px 30px rgba(234,29,44,.5);z-index:9997;display:none;text-align:center;width:90%;max-width:360px}
 .alert-real.show{display:block;animation:blink .6s infinite}
 
-/* Modal corrida real */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:none;align-items:center;justify-content:center}
 .modal-overlay.show{display:flex}
 .modal{background:#fff;border-radius:var(--radius);padding:24px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
@@ -127,7 +124,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
   .layout{flex-direction:column}
   .col-right{width:100%}
   #map{height:240px}
-  /* Em mobile volta para 2 colunas */
   .cfg-grid{grid-template-columns:1fr 1fr}
 }
 </style>
@@ -168,7 +164,6 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
           <label>Dist. Máx (km)</label>
           <input type="number" id="distanciaMaxima" value="10" min="1" max="100">
         </div>
-        <!-- CORRIGIDO: Latitude e Longitude presentes -->
         <div class="cfg-field">
           <label>Latitude</label>
           <input type="number" id="latInput" value="-23.6821" step="0.0001">
@@ -250,44 +245,41 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Configurações ─────────────────────────────────────────────
-var BACKEND  = '';      // mesmo servidor — deixe vazio
-var POLL_MS  = 2000;    // polling a cada 2 segundos
-
-var PLT_COLORS = { ifood:'#ea1d2c', ubereats:'#222222', keeta:'#00b4d8', loggi:'#ff6b00' };
-var PLT_LABELS = { ifood:'iFood',   ubereats:'Uber Eats', keeta:'Keeta',  loggi:'Loggi'  };
+var BACKEND  = '';
+var POLL_MS  = 2000;
+var PLT_COLORS = {ifood:'#ea1d2c',ubereats:'#222222',keeta:'#00b4d8',loggi:'#ff6b00'};
+var PLT_LABELS = {ifood:'iFood',ubereats:'Uber Eats',keeta:'Keeta',loggi:'Loggi'};
 var PLT_ICONS  = {
-  ifood:    'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
-  ubereats: 'http://maps.google.com/mapfiles/ms/icons/purple-dot.png',
-  keeta:    'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-  loggi:    'http://maps.google.com/mapfiles/ms/icons/orange-dot.png'
+  ifood:   'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+  ubereats:'http://maps.google.com/mapfiles/ms/icons/purple-dot.png',
+  keeta:   'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+  loggi:   'http://maps.google.com/mapfiles/ms/icons/orange-dot.png'
 };
 
-// ── Estado ───────────────────────────────────────────────────
 var map, userMarker, circle;
 var rideMarkers     = [];
 var allRides        = [];
-var pltStates       = { ifood:true, ubereats:true, keeta:true, loggi:true };
+var pltStates       = {ifood:true,ubereats:true,keeta:true,loggi:true};
 var pendingRealRide = null;
 var alertTimer;
-// CORRIGIDO: rastreia por ID, não por booleano — evita alertas repetidos
-var seenRealIds     = new Set();
 
-// ── Inicializa mapa ───────────────────────────────────────────
+// CORRIGIDO: rastreia por ID — sem alertas duplicados
+var seenRealIds = {};
+
 function initMap() {
-  var pos = { lat: -23.6821, lng: -46.5650 };
-  map = new google.maps.Map(document.getElementById('map'), {
-    zoom: 14, center: pos,
-    mapTypeControl: false, fullscreenControl: false, streetViewControl: false
+  var pos = {lat:-23.6821,lng:-46.5650};
+  map = new google.maps.Map(document.getElementById('map'),{
+    zoom:14, center:pos,
+    mapTypeControl:false, fullscreenControl:false, streetViewControl:false
   });
   userMarker = new google.maps.Marker({
-    position: pos, map: map, title: 'Você',
-    icon: {
-      path: google.maps.SymbolPath.CIRCLE,
-      scale: 10, fillColor: '#667eea', fillOpacity: 1,
-      strokeColor: '#fff', strokeWeight: 3
+    position:pos, map:map, title:'Você',
+    icon:{
+      path:google.maps.SymbolPath.CIRCLE,
+      scale:10, fillColor:'#667eea', fillOpacity:1,
+      strokeColor:'#fff', strokeWeight:3
     },
-    zIndex: 999
+    zIndex:999
   });
   drawCircle(pos);
   getLocation();
@@ -295,47 +287,44 @@ function initMap() {
   setInterval(fetchRides, POLL_MS);
 }
 
-// ── Geolocalização ────────────────────────────────────────────
 function getLocation() {
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(function(pos) {
     var lat = pos.coords.latitude;
     var lng = pos.coords.longitude;
-    userMarker.setPosition({ lat: lat, lng: lng });
-    map.panTo({ lat: lat, lng: lng });
+    userMarker.setPosition({lat:lat, lng:lng});
+    map.panTo({lat:lat, lng:lng});
     map.setZoom(14);
     document.getElementById('latInput').value = lat.toFixed(6);
-    document.getElementById('lngInput').value = lng.toFixed(6);   // CORRIGIDO
+    document.getElementById('lngInput').value = lng.toFixed(6);
     document.getElementById('mapCoords').textContent = '📍 ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
-    drawCircle({ lat: lat, lng: lng });
+    drawCircle({lat:lat, lng:lng});
     showToast('📍 Localização obtida!', 'success');
   }, function() {
     showToast('⚠️ GPS indisponível', 'error');
-  }, { enableHighAccuracy: true, timeout: 10000 });
+  }, {enableHighAccuracy:true, timeout:10000});
 }
 
-// ── Círculo de raio ───────────────────────────────────────────
 function drawCircle(center) {
   if (circle) circle.setMap(null);
   var r = parseFloat(document.getElementById('raioMaximo').value) || 5;
   circle = new google.maps.Circle({
-    center: center, radius: r * 1000, map: map,
-    fillColor: '#667eea', fillOpacity: .10,
-    strokeColor: '#667eea', strokeOpacity: .5, strokeWeight: 2
+    center:center, radius:r*1000, map:map,
+    fillColor:'#667eea', fillOpacity:.10,
+    strokeColor:'#667eea', strokeOpacity:.5, strokeWeight:2
   });
 }
 
-// ── Polling de corridas ───────────────────────────────────────
 function fetchRides() {
   fetch(BACKEND + '/api/rides')
-    .then(function(r) { return r.json(); })
+    .then(function(r){ return r.json(); })
     .then(function(data) {
       allRides = data;
 
-      // Verifica novas corridas reais não vistas ainda
+      // Verifica novas corridas reais ainda não alertadas
       data.forEach(function(ride) {
-        if (ride.source === 'real' && ride.status === 'pending' && !seenRealIds.has(ride.id)) {
-          seenRealIds.add(ride.id);
+        if (ride.source === 'real' && ride.status === 'pending' && !seenRealIds[ride.id]) {
+          seenRealIds[ride.id] = true;
           triggerRealAlert(ride);
         }
       });
@@ -349,18 +338,25 @@ function fetchRides() {
     });
 }
 
-// ── Alerta corrida real ───────────────────────────────────────
 function triggerRealAlert(ride) {
   var el = document.getElementById('alertReal');
   el.textContent = '🚨 CORRIDA REAL! R$ ' + parseFloat(ride.earnings).toFixed(2) + ' — ' + PLT_LABELS[ride.platform];
   el.classList.add('show');
   clearTimeout(alertTimer);
-  alertTimer = setTimeout(function() { el.classList.remove('show'); }, 10000);
-  if (navigator.vibrate) navigator.vibrate([400, 100, 400, 100, 400]);
+  alertTimer = setTimeout(function(){ el.classList.remove('show'); }, 10000);
+  if (navigator.vibrate) navigator.vibrate([400,100,400,100,400]);
   showToast('🚨 REAL: R$ ' + parseFloat(ride.earnings).toFixed(2) + ' — ' + PLT_LABELS[ride.platform], 'real');
 }
 
-// ── Filtragem ─────────────────────────────────────────────────
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&')
+    .replace(/</g,'<')
+    .replace(/>/g,'>')
+    .replace(/"/g,'&quot;');
+}
+
 function getFiltered() {
   var ganhoMin = parseFloat(document.getElementById('ganhoMinimo').value) || 0;
   var raio     = parseFloat(document.getElementById('raioMaximo').value)  || 5;
@@ -376,7 +372,6 @@ function getFiltered() {
   });
 }
 
-// ── Renderização de corridas ──────────────────────────────────
 function renderRides() {
   var filtered  = getFiltered();
   var container = document.getElementById('ridesList');
@@ -395,9 +390,7 @@ function renderRides() {
     var l      = PLT_LABELS[ride.platform] || ride.platform;
     var isReal = ride.source === 'real';
     html += '<div class="ride-card" data-p="' + ride.platform + '">' +
-      (isReal
-        ? '<div class="badge-real">🔴 REAL</div>'
-        : '<div class="badge-sim">🔵 SIM</div>') +
+      (isReal ? '<div class="badge-real">🔴 REAL</div>' : '<div class="badge-sim">🔵 SIM</div>') +
       '<div class="ride-top">' +
         '<div class="ride-plt">' +
           '<div class="ride-plt-dot" style="background:' + c + '"></div>' +
@@ -419,38 +412,38 @@ function renderRides() {
   updateMarkers(filtered);
 }
 
-// ── Marcadores no mapa ────────────────────────────────────────
 function updateMarkers(rides) {
   for (var i = 0; i < rideMarkers.length; i++) rideMarkers[i].setMap(null);
   rideMarkers = [];
-  rides.forEach(function(ride) {
+  for (var i = 0; i < rides.length; i++) {
+    var ride = rides[i];
     var marker = new google.maps.Marker({
-      position: { lat: ride.lat, lng: ride.lng },
-      map: map, icon: PLT_ICONS[ride.platform],
-      title: PLT_LABELS[ride.platform] + ' R$' + parseFloat(ride.earnings).toFixed(2)
+      position:{lat:ride.lat, lng:ride.lng},
+      map:map, icon:PLT_ICONS[ride.platform],
+      title:PLT_LABELS[ride.platform] + ' R$' + parseFloat(ride.earnings).toFixed(2)
     });
     (function(m, r) {
       var iw = new google.maps.InfoWindow({
-        content: '<div style="padding:8px;font-size:12px">' +
+        content:'<div style="padding:8px;font-size:12px">' +
           '<strong style="color:' + PLT_COLORS[r.platform] + '">' + PLT_LABELS[r.platform] + '</strong>' +
-          (r.source === 'real'
-            ? ' <span style="background:#ea1d2c;color:#fff;padding:1px 5px;border-radius:4px;font-size:10px">REAL</span>'
-            : '') +
+          (r.source==='real' ? ' <span style="background:#ea1d2c;color:#fff;padding:1px 5px;border-radius:4px;font-size:10px">REAL</span>' : '') +
           '<br>📍 ' + escHtml(r.destination) +
           '<br>💰 R$ ' + parseFloat(r.earnings).toFixed(2) +
           '<br>🛣️ ' + parseFloat(r.distance).toFixed(1) + ' km</div>'
       });
-      m.addListener('click', function() { iw.open(map, m); });
+      m.addListener('click', function(){ iw.open(map, m); });
     })(marker, ride);
     rideMarkers.push(marker);
-  });
+  }
 }
 
-// ── Aceitar corrida ───────────────────────────────────────────
 function acceptRide(rideId, platform, isReal) {
   if (isReal === true || isReal === 'true') {
-    var ride = allRides.find(function(r) { return r.id === rideId; }) || null;
-    pendingRealRide = { rideId: rideId, platform: platform, ride: ride };
+    var ride = null;
+    for (var i = 0; i < allRides.length; i++) {
+      if (allRides[i].id === rideId) { ride = allRides[i]; break; }
+    }
+    pendingRealRide = {rideId:rideId, platform:platform, ride:ride};
     document.getElementById('modalEarn').textContent = 'R$ ' + parseFloat(ride ? ride.earnings : 0).toFixed(2);
     document.getElementById('modalText').innerHTML =
       '<strong>' + PLT_LABELS[platform] + '</strong><br>' +
@@ -478,11 +471,11 @@ function closeModal() {
 
 function doAccept(rideId, platform) {
   fetch(BACKEND + '/api/accept-ride', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ rideId: rideId, platform: platform })
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({rideId:rideId, platform:platform})
   })
-  .then(function(r) { return r.json(); })
+  .then(function(r){ return r.json(); })
   .then(function(data) {
     if (data.success) {
       showToast('✅ Corrida aceita!', 'success');
@@ -492,33 +485,30 @@ function doAccept(rideId, platform) {
       showToast('❌ Erro ao aceitar', 'error');
     }
   })
-  .catch(function() { showToast('❌ Sem conexão', 'error'); });
+  .catch(function(){ showToast('❌ Sem conexão', 'error'); });
 }
 
-// ── Rejeitar corrida ──────────────────────────────────────────
 function rejectRide(rideId, platform) {
   fetch(BACKEND + '/api/reject-ride', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ rideId: rideId, platform: platform })
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({rideId:rideId, platform:platform})
   })
-  .then(function(r) { return r.json(); })
+  .then(function(r){ return r.json(); })
   .then(function(data) {
     if (data.success) { showToast('🗑️ Rejeitada', 'info'); fetchRides(); }
   });
 }
 
-// ── Salvar configurações ──────────────────────────────────────
 function saveConfig() {
   var pos = userMarker.getPosition();
-  // CORRIGIDO: usa latInput e lngInput + fallback para posição do marcador
   var lat = parseFloat(document.getElementById('latInput').value) || pos.lat();
   var lng = parseFloat(document.getElementById('lngInput').value) || pos.lng();
 
   fetch(BACKEND + '/api/config', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
       latitude:        lat,
       longitude:       lng,
       raioMaximo:      parseFloat(document.getElementById('raioMaximo').value),
@@ -526,22 +516,20 @@ function saveConfig() {
       distanciaMaxima: parseFloat(document.getElementById('distanciaMaxima').value)
     })
   })
-  .then(function(r) { return r.json(); })
+  .then(function(r){ return r.json(); })
   .then(function(data) {
     if (data.success) {
       showToast('💾 Salvo!', 'success');
-      // Atualiza marcador e círculo com nova posição
-      userMarker.setPosition({ lat: lat, lng: lng });
-      map.panTo({ lat: lat, lng: lng });
-      drawCircle({ lat: lat, lng: lng });
+      userMarker.setPosition({lat:lat, lng:lng});
+      map.panTo({lat:lat, lng:lng});
+      drawCircle({lat:lat, lng:lng});
     }
   });
 }
 
-// ── Toggle plataforma ─────────────────────────────────────────
 function togglePlatform(p) {
-  fetch(BACKEND + '/api/platform/' + p + '/toggle', { method: 'POST' })
-    .then(function(r) { return r.json(); })
+  fetch(BACKEND + '/api/platform/' + p + '/toggle', {method:'POST'})
+    .then(function(r){ return r.json(); })
     .then(function(data) {
       pltStates[p] = data.enabled;
       var el = document.getElementById('ptoggle-' + p);
@@ -556,12 +544,12 @@ function togglePlatform(p) {
     });
 }
 
-// ── Estatísticas ──────────────────────────────────────────────
 function updateStats() {
-  ['ifood', 'ubereats', 'keeta', 'loggi'].forEach(function(p) {
-    var n = allRides.filter(function(r) {
-      return r.platform === p && r.status === 'pending';
-    }).length;
+  ['ifood','ubereats','keeta','loggi'].forEach(function(p) {
+    var n = 0;
+    for (var i = 0; i < allRides.length; i++) {
+      if (allRides[i].platform === p && allRides[i].status === 'pending') n++;
+    }
     var sv = document.getElementById('st-' + p);
     var sc = document.getElementById('pcnt-' + p);
     if (sv) sv.textContent = n;
@@ -569,23 +557,12 @@ function updateStats() {
   });
 }
 
-// ── Helpers ───────────────────────────────────────────────────
 function timeAgo(ts) {
   if (!ts) return '--';
   var d = Math.floor((Date.now() - new Date(ts)) / 1000);
   if (d < 60)   return d + 's atrás';
-  if (d < 3600) return Math.floor(d / 60) + 'min atrás';
-  return Math.floor(d / 3600) + 'h atrás';
-}
-
-// CORRIGIDO: sanitiza HTML para evitar XSS em destinos vindos do app
-function escHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '&quot;');
+  if (d < 3600) return Math.floor(d/60) + 'min atrás';
+  return Math.floor(d/3600) + 'h atrás';
 }
 
 var toastTimer;
@@ -594,10 +571,9 @@ function showToast(msg, type) {
   el.textContent = msg;
   el.className = 'toast ' + (type || 'info') + ' show';
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function() { el.classList.remove('show'); }, 3500);
+  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3500);
 }
 
-// ── Listeners ─────────────────────────────────────────────────
 document.getElementById('raioMaximo').addEventListener('change', function() {
   drawCircle(userMarker.getPosition().toJSON());
   renderRides();
