@@ -14,6 +14,8 @@
   --shadow:0 4px 18px rgba(0,0,0,.10);--radius:14px;
 }
 body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
 .header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(102,126,234,.4)}
 .header h1{font-size:18px;font-weight:800}
 .header p{font-size:11px;opacity:.85;margin-top:1px}
@@ -23,14 +25,20 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
 .tbar{height:3px;background:#ddd}
 .tbar-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);animation:tbar 2s linear infinite;transform-origin:left}
 @keyframes tbar{0%{transform:scaleX(1)}100%{transform:scaleX(0)}}
+
+/* LAYOUT */
 .layout{display:flex;flex:1;gap:12px;padding:12px;max-width:1400px;margin:0 auto;width:100%}
 .col-left{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
-.col-right{width:340px;display:flex;flex-direction:column;gap:12px;flex-shrink:0}
+.col-right{width:360px;display:flex;flex-direction:column;gap:12px;flex-shrink:0}
+
+/* MAPA */
 .map-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-#map{height:300px;width:100%}
+#map{height:280px;width:100%}
 .map-foot{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fafafa;border-top:1px solid var(--border)}
 .map-coords{font-size:11px;color:var(--muted)}
 .btn-loc{padding:8px 14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer}
+
+/* FILTROS */
 .cfg-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
 .cfg-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
 .cfg-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
@@ -38,6 +46,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
 .cfg-field input{width:100%;padding:9px 10px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:#fafafa}
 .cfg-field input:focus{outline:none;border-color:var(--primary)}
 .btn-save{width:100%;padding:11px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer}
+
+/* PLATAFORMAS */
 .plt-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
 .plt-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
 .plt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -50,6 +60,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
 .plt-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .plt-name{font-size:12px;font-weight:800;flex:1}
 .plt-cnt{font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.07);min-width:22px;text-align:center}
+
+/* STATS */
 .stats-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .stat-box{text-align:center;padding:10px 6px;border-radius:10px;border-top:3px solid var(--primary);background:#f5f7ff}
@@ -59,63 +71,152 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
 .stat-box.loggi{border-color:var(--loggi);background:#fff8f0}
 .stat-v{font-size:20px;font-weight:800;color:#333}
 .stat-l{font-size:10px;color:var(--muted);margin-top:3px;font-weight:700;text-transform:uppercase}
+
+/* LISTA OFERTAS */
 .rides-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
 .rides-head{padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
 .rides-head h3{font-size:15px;font-weight:700}
 .rides-badge{background:var(--primary);color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
-.rides-list{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;max-height:500px}
-.ride-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;border-left:5px solid var(--primary);animation:slideIn .3s ease-out;position:relative}
-@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
-.ride-card[data-p="ifood"]{border-left-color:var(--ifood)}
-.ride-card[data-p="ubereats"]{border-left-color:var(--uber)}
-.ride-card[data-p="keeta"]{border-left-color:var(--keeta)}
-.ride-card[data-p="loggi"]{border-left-color:var(--loggi)}
-.badge-real{position:absolute;top:8px;right:8px;background:#ea1d2c;color:#fff;font-size:9px;font-weight:800;padding:3px 9px;border-radius:8px;animation:blink .8s infinite}
-.badge-sim{position:absolute;top:8px;right:8px;background:#667eea;color:#fff;font-size:9px;font-weight:800;padding:3px 9px;border-radius:8px}
-.ride-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-right:65px}
-.ride-plt{display:flex;align-items:center;gap:5px}
-.ride-plt-dot{width:8px;height:8px;border-radius:50%}
-.ride-plt-name{font-size:12px;font-weight:800;letter-spacing:.5px}
-.ride-earn{font-size:18px;font-weight:800;color:var(--success)}
-.ride-dest{background:#f5f7ff;border-left:3px solid var(--primary);padding:6px 10px;border-radius:0 8px 8px 0;font-size:12px;margin-bottom:8px}
-.ride-meta{display:flex;gap:12px;margin-bottom:10px}
-.ride-meta span{font-size:11px;color:var(--muted)}
-.ride-meta strong{color:#333;font-size:12px}
-.ride-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.btn-ac,.btn-rj{padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
-.btn-ac{background:var(--success);color:#fff}
-.btn-rj{background:var(--danger);color:#fff}
+.rides-list{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:12px;max-height:560px}
+
+/* ═══════════════════════════════════════════
+   CARD ESTILO KEETA/IFOOD — igual ao app
+   ═══════════════════════════════════════════ */
+.offer-card{
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 6px 24px rgba(0,0,0,.13);
+  animation:slideDown .35s cubic-bezier(.34,1.56,.64,1);
+  position:relative;
+}
+@keyframes slideDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+
+/* Cabeçalho escuro — igual ao app Keeta */
+.offer-head{
+  padding:18px 18px 14px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  position:relative;
+}
+.offer-card.keeta   .offer-head{background:#1a1a1a}
+.offer-card.ifood   .offer-head{background:#1a1a1a}
+.offer-card.ubereats .offer-head{background:#000}
+.offer-card.loggi   .offer-head{background:#1a1a1a}
+
+/* Logo da plataforma */
+.offer-logo{
+  width:52px;height:52px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:900;color:#fff;
+  flex-shrink:0;
+}
+.offer-card.keeta   .offer-logo{background:#f5c518;color:#000}
+.offer-card.ifood   .offer-logo{background:#ea1d2c}
+.offer-card.ubereats .offer-logo{background:#fff;color:#000}
+.offer-card.loggi   .offer-logo{background:#ff6b00}
+
+/* Valor grande */
+.offer-earn{
+  font-size:36px;font-weight:900;color:#fff;
+  line-height:1;
+}
+
+/* Timer circular */
+.offer-timer-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.offer-timer-circle{
+  width:52px;height:52px;border-radius:50%;
+  border:4px solid rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:900;color:#fff;
+  position:relative;
+  flex-shrink:0;
+}
+.offer-timer-circle svg{position:absolute;top:-4px;left:-4px;width:60px;height:60px}
+.offer-timer-circle svg circle{fill:none;stroke-width:4;stroke-linecap:round;transform:rotate(-90deg);transform-origin:30px 30px}
+.offer-timer-circle.urgente{border-color:#ff4444;color:#ff4444}
+.offer-timer-circle.urgente svg circle{stroke:#ff4444}
+.offer-timer-num{font-size:17px;font-weight:900;position:relative;z-index:1}
+
+/* Barra de tempo embaixo do header */
+.offer-progress{height:5px;background:rgba(255,255,255,.15);position:relative}
+.offer-progress-fill{height:100%;transition:width 1s linear}
+.offer-card.keeta   .offer-progress-fill{background:#f5c518}
+.offer-card.ifood   .offer-progress-fill{background:#ea1d2c}
+.offer-card.ubereats .offer-progress-fill{background:#fff}
+.offer-card.loggi   .offer-progress-fill{background:#ff6b00}
+
+/* Corpo branco — endereços */
+.offer-body{background:#fff;padding:14px 16px 10px}
+
+.offer-km{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#f0f0f0;border-radius:20px;
+  padding:5px 12px;font-size:13px;font-weight:800;
+  margin-bottom:12px;color:#333;
+}
+
+.offer-route{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.offer-row{display:flex;align-items:flex-start;gap:10px}
+.offer-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.offer-addr{font-size:13px;color:#333;line-height:1.4}
+.offer-addr-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.offer-divider{height:1px;background:#f0f0f0;margin:0 0 0 26px}
+
+/* Botão ACEITAR — igual ao "Pegar" do Keeta */
+.offer-btn-wrap{padding:0 16px 16px}
+.btn-pegar{
+  width:100%;padding:16px;
+  border:none;border-radius:12px;
+  font-size:17px;font-weight:900;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  letter-spacing:.3px;
+  transition:transform .1s, box-shadow .1s;
+}
+.offer-card.keeta   .btn-pegar{background:#f5c518;color:#000;box-shadow:0 4px 16px rgba(245,197,24,.5)}
+.offer-card.ifood   .btn-pegar{background:#ea1d2c;color:#fff;box-shadow:0 4px 16px rgba(234,29,44,.4)}
+.offer-card.ubereats .btn-pegar{background:#000;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.offer-card.loggi   .btn-pegar{background:#ff6b00;color:#fff;box-shadow:0 4px 16px rgba(255,107,0,.4)}
+.btn-pegar:active{transform:scale(.97)}
+.btn-pegar.urgente{animation:blink .5s infinite}
+
+/* Botão rejeitar discreto */
+.btn-skip{
+  width:100%;padding:10px;background:none;border:none;
+  color:var(--muted);font-size:13px;font-weight:700;
+  cursor:pointer;margin-top:-4px;
+  display:block;text-align:center;
+  padding-bottom:12px;
+}
+
 .empty{text-align:center;color:var(--muted);padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:10px}
 .empty-icon{font-size:42px;opacity:.4}
-.alert-real{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#ea1d2c;color:#fff;padding:14px 24px;border-radius:14px;font-weight:800;font-size:14px;box-shadow:0 8px 30px rgba(234,29,44,.5);z-index:9997;display:none;text-align:center;width:90%;max-width:360px}
+
+/* ALERTA TOPO */
+.alert-real{position:fixed;top:68px;left:50%;transform:translateX(-50%);background:#ea1d2c;color:#fff;padding:14px 22px;border-radius:14px;font-weight:800;font-size:14px;box-shadow:0 8px 30px rgba(234,29,44,.5);z-index:9997;display:none;text-align:center;width:92%;max-width:380px}
 .alert-real.show{display:block;animation:blink .6s infinite}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:none;align-items:center;justify-content:center}
-.modal-overlay.show{display:flex}
-.modal{background:#fff;border-radius:var(--radius);padding:24px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
-.modal-icon{font-size:48px;margin-bottom:12px}
-.modal h2{font-size:20px;margin-bottom:8px}
-.modal-earn{font-size:30px;font-weight:800;color:var(--success);margin:10px 0}
-.modal p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
-.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn-modal-ok{padding:14px;background:var(--success);color:#fff;border:none;border-radius:8px;font-weight:800;font-size:15px;cursor:pointer}
-.btn-modal-cancel{padding:14px;background:#eee;color:#333;border:none;border-radius:8px;font-weight:700;font-size:15px;cursor:pointer}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);padding:12px 22px;background:#333;color:#fff;border-radius:30px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);white-space:nowrap}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);padding:12px 22px;background:#333;color:#fff;border-radius:30px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;max-width:90vw;text-align:center}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.success{background:var(--success)}
 .toast.error{background:var(--danger)}
 .toast.info{background:var(--primary)}
-.toast.real{background:#ea1d2c}
+.toast.real{background:#1a1a1a}
+
 @media(max-width:960px){
   .layout{flex-direction:column}
   .col-right{width:100%}
-  #map{height:240px}
+  #map{height:220px}
   .cfg-grid{grid-template-columns:1fr 1fr}
+  .offer-earn{font-size:32px}
 }
 </style>
 </head>
 <body>
 
-<div class="alert-real" id="alertReal">🚨 CORRIDA REAL!</div>
+<div class="alert-real" id="alertReal">🚨 Nova oferta!</div>
 
 <div class="header">
   <div><h1>🚗 DeliveryHub</h1><p>Monitor em Tempo Real</p></div>
@@ -129,7 +230,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
     <div class="map-card">
       <div id="map"></div>
       <div class="map-foot">
-        <span class="map-coords" id="mapCoords">📍 Santo André, SP</span>
+        <span class="map-coords" id="mapCoords">📍 Diadema, SP</span>
         <button class="btn-loc" onclick="getLocation()">📍 Minha Localização</button>
       </div>
     </div>
@@ -137,26 +238,11 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
     <div class="cfg-card">
       <h3>⚙️ Filtros</h3>
       <div class="cfg-grid">
-        <div class="cfg-field">
-          <label>Raio (km)</label>
-          <input type="number" id="raioMaximo" value="5" min="1" max="50" step="0.5">
-        </div>
-        <div class="cfg-field">
-          <label>Ganho Mín (R$)</label>
-          <input type="number" id="ganhoMinimo" value="15" min="0" step="0.5">
-        </div>
-        <div class="cfg-field">
-          <label>Dist. Máx (km)</label>
-          <input type="number" id="distanciaMaxima" value="10" min="1" max="100">
-        </div>
-        <div class="cfg-field">
-          <label>Latitude</label>
-          <input type="number" id="latInput" value="-23.6821" step="0.0001">
-        </div>
-        <div class="cfg-field">
-          <label>Longitude</label>
-          <input type="number" id="lngInput" value="-46.5650" step="0.0001">
-        </div>
+        <div class="cfg-field"><label>Raio (km)</label><input type="number" id="raioMaximo" value="5" min="1" max="50" step="0.5"></div>
+        <div class="cfg-field"><label>Ganho Mín (R$)</label><input type="number" id="ganhoMinimo" value="10" min="0" step="0.5"></div>
+        <div class="cfg-field"><label>Dist. Máx (km)</label><input type="number" id="distanciaMaxima" value="10" min="1" max="100"></div>
+        <div class="cfg-field"><label>Latitude</label><input type="number" id="latInput" value="-23.6721" step="0.0001"></div>
+        <div class="cfg-field"><label>Longitude</label><input type="number" id="lngInput" value="-46.6077" step="0.0001"></div>
       </div>
       <button class="btn-save" onclick="saveConfig()">💾 Salvar Configurações</button>
     </div>
@@ -202,312 +288,302 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;dis
 
     <div class="rides-card">
       <div class="rides-head">
-        <h3>📦 Corridas</h3>
+        <h3>📦 Ofertas</h3>
         <span class="rides-badge" id="ridesBadge">0</span>
       </div>
       <div class="rides-list" id="ridesList">
-        <div class="empty"><span class="empty-icon">🛵</span><span>Aguardando corridas...</span></div>
+        <div class="empty"><span class="empty-icon">🛵</span><span>Aguardando ofertas...</span></div>
       </div>
     </div>
 
-  </div>
-</div>
-
-<!-- MODAL -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <div class="modal-icon">🚨</div>
-    <h2>Corrida REAL!</h2>
-    <div class="modal-earn" id="modalEarn">R$ 0,00</div>
-    <p id="modalText">Confirmar aceitação?</p>
-    <div class="modal-btns">
-      <button class="btn-modal-ok" onclick="confirmAcceptReal()">✅ ACEITAR</button>
-      <button class="btn-modal-cancel" onclick="closeModal()">❌ Recusar</button>
-    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-var BACKEND  = '';
-var POLL_MS  = 2000;
-var PLT_COLORS = {ifood:'#ea1d2c',ubereats:'#222222',keeta:'#00b4d8',loggi:'#ff6b00'};
-var PLT_LABELS = {ifood:'iFood',ubereats:'Uber Eats',keeta:'Keeta',loggi:'Loggi'};
-var PLT_ICONS  = {
-  ifood:   'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
-  ubereats:'http://maps.google.com/mapfiles/ms/icons/purple-dot.png',
-  keeta:   'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-  loggi:   'http://maps.google.com/mapfiles/ms/icons/orange-dot.png'
-};
+var BACKEND = '';
+var POLL_MS = 2000;
+var PLT_COLORS  = {ifood:'#ea1d2c',ubereats:'#222',keeta:'#00b4d8',loggi:'#ff6b00'};
+var PLT_LABELS  = {ifood:'iFood',ubereats:'Uber Eats',keeta:'Keeta',loggi:'Loggi'};
+var PLT_LOGOS   = {ifood:'iFood',ubereats:'Uber',keeta:'keeta',loggi:'Loggi'};
 
 var map, userMarker, circle;
-var rideMarkers     = [];
-var allRides        = [];
-var pltStates       = {ifood:true,ubereats:true,keeta:true,loggi:true};
-var pendingRealRide = null;
+var rideMarkers   = [];
+var allRides      = [];
+var pltStates     = {ifood:true,ubereats:true,keeta:true,loggi:true};
 var alertTimer;
-var seenRealIds     = {};
+var seenRealIds   = {};
+var countdownTimers = {};
 
-// ── CORRIGIDO: GPS com retry e fallback silencioso ────────────
-var gpsAttempts = 0;
-
+// ── MAPA ──────────────────────────────────────────────────────
 function initMap() {
-  var pos = {lat:-23.6821,lng:-46.5650};
+  var pos = {lat:-23.6721,lng:-46.6077};
   map = new google.maps.Map(document.getElementById('map'),{
-    zoom:14, center:pos,
-    mapTypeControl:false, fullscreenControl:false, streetViewControl:false
+    zoom:14,center:pos,
+    mapTypeControl:false,fullscreenControl:false,streetViewControl:false
   });
   userMarker = new google.maps.Marker({
-    position:pos, map:map, title:'Você',
-    icon:{
-      path:google.maps.SymbolPath.CIRCLE,
-      scale:10, fillColor:'#667eea', fillOpacity:1,
-      strokeColor:'#fff', strokeWeight:3
-    },
+    position:pos,map:map,title:'Você',
+    icon:{path:google.maps.SymbolPath.CIRCLE,scale:10,fillColor:'#667eea',fillOpacity:1,strokeColor:'#fff',strokeWeight:3},
     zIndex:999
   });
   drawCircle(pos);
-
-  // Tenta GPS automaticamente — sem toast de erro na primeira carga
   getLocationSilent();
-
   fetchRides();
   setInterval(fetchRides, POLL_MS);
 }
 
-// Chamada automática ao iniciar — falha silenciosa
 function getLocationSilent() {
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(
-    function(pos) { applyLocation(pos); },
-    function() {
-      // Silencioso — usa coordenada padrão sem mostrar erro
-      console.log('[GPS] Nao disponivel — usando coordenada padrao');
-    },
-    {
-      enableHighAccuracy: false,  // false = mais rapido, usa rede/wifi
-      timeout: 8000,
-      maximumAge: 60000           // aceita posicao em cache de ate 1 min
-    }
+    function(p){ applyLocation(p); },
+    function(){ console.log('[GPS] Usando padrão'); },
+    {enableHighAccuracy:false,timeout:8000,maximumAge:60000}
   );
 }
 
-// Chamada manual pelo botão — feedback ao usuário
 function getLocation() {
-  if (!navigator.geolocation) {
-    showToast('⚠️ Navegador sem suporte a GPS', 'error');
-    return;
-  }
-  showToast('📡 Obtendo localização...', 'info');
+  if (!navigator.geolocation) { showToast('⚠️ Sem suporte a GPS','error'); return; }
+  showToast('📡 Obtendo localização...','info');
   navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      applyLocation(pos);
-      showToast('📍 Localização obtida!', 'success');
+    function(p){ applyLocation(p); showToast('📍 Localização obtida!','success'); },
+    function(e){
+      var m = '⚠️ GPS indisponível';
+      if (e.code===1) m='🔒 Permissão negada';
+      if (e.code===2) m='📡 Sinal indisponível';
+      if (e.code===3) m='⏱️ Tempo esgotado';
+      showToast(m,'error');
     },
-    function(err) {
-      // Mensagens específicas por código de erro
-      var msg = '⚠️ GPS indisponível';
-      if (err.code === 1) msg = '🔒 Permissão de GPS negada';
-      if (err.code === 2) msg = '📡 Sinal GPS indisponível';
-      if (err.code === 3) msg = '⏱️ GPS: tempo esgotado — tente ao ar livre';
-      showToast(msg, 'error');
-      console.log('[GPS] Erro', err.code, err.message);
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,   // aumentado para 15s
-      maximumAge: 30000
-    }
+    {enableHighAccuracy:true,timeout:15000,maximumAge:30000}
   );
 }
 
-// Aplica coordenadas ao mapa e campos
-function applyLocation(pos) {
-  var lat = pos.coords.latitude;
-  var lng = pos.coords.longitude;
-  userMarker.setPosition({lat:lat, lng:lng});
-  map.panTo({lat:lat, lng:lng});
-  map.setZoom(14);
-  document.getElementById('latInput').value = lat.toFixed(6);
-  document.getElementById('lngInput').value = lng.toFixed(6);
-  document.getElementById('mapCoords').textContent =
-    '📍 ' + lat.toFixed(4) + ', ' + lng.toFixed(4);
-  drawCircle({lat:lat, lng:lng});
+function applyLocation(p) {
+  var lat=p.coords.latitude, lng=p.coords.longitude;
+  userMarker.setPosition({lat:lat,lng:lng});
+  map.panTo({lat:lat,lng:lng}); map.setZoom(14);
+  document.getElementById('latInput').value=lat.toFixed(6);
+  document.getElementById('lngInput').value=lng.toFixed(6);
+  document.getElementById('mapCoords').textContent='📍 '+lat.toFixed(4)+', '+lng.toFixed(4);
+  drawCircle({lat:lat,lng:lng});
 }
 
-function drawCircle(center) {
+function drawCircle(c) {
   if (circle) circle.setMap(null);
-  var r = parseFloat(document.getElementById('raioMaximo').value) || 5;
-  circle = new google.maps.Circle({
-    center:center, radius:r*1000, map:map,
-    fillColor:'#667eea', fillOpacity:.10,
-    strokeColor:'#667eea', strokeOpacity:.5, strokeWeight:2
-  });
+  var r=parseFloat(document.getElementById('raioMaximo').value)||5;
+  circle=new google.maps.Circle({center:c,radius:r*1000,map:map,fillColor:'#667eea',fillOpacity:.10,strokeColor:'#667eea',strokeOpacity:.5,strokeWeight:2});
 }
 
+// ── POLLING ───────────────────────────────────────────────────
 function fetchRides() {
   fetch(BACKEND+'/api/rides')
     .then(function(r){return r.json();})
     .then(function(data){
       allRides = data;
-      data.forEach(function(ride) {
+      // Detecta novas ofertas reais
+      data.forEach(function(ride){
         if (ride.source==='real' && ride.status==='pending' && !seenRealIds[ride.id]) {
           seenRealIds[ride.id] = true;
-          triggerRealAlert(ride);
+          triggerAlert(ride);
         }
+      });
+      // Remove timers de corridas que sumiram
+      Object.keys(countdownTimers).forEach(function(id){
+        var still = data.some(function(r){return r.id===id&&r.status==='pending';});
+        if (!still) stopCountdown(id);
       });
       renderRides();
       updateStats();
-      document.getElementById('hstatusText').textContent = 'Online';
+      document.getElementById('hstatusText').textContent='Online';
     })
-    .catch(function(){
-      document.getElementById('hstatusText').textContent = 'Offline';
-    });
+    .catch(function(){ document.getElementById('hstatusText').textContent='Offline'; });
 }
 
-function triggerRealAlert(ride) {
+function triggerAlert(ride) {
   var el = document.getElementById('alertReal');
-  el.textContent = '🚨 CORRIDA REAL! R$ '+parseFloat(ride.earnings).toFixed(2)+' — '+PLT_LABELS[ride.platform];
+  el.textContent = '🚨 '+PLT_LABELS[ride.platform]+' — R$ '+parseFloat(ride.earnings).toFixed(2)+' | '+ride.distance+' km';
   el.classList.add('show');
   clearTimeout(alertTimer);
-  alertTimer = setTimeout(function(){ el.classList.remove('show'); }, 10000);
-  if (navigator.vibrate) navigator.vibrate([400,100,400,100,400]);
-  showToast('🚨 REAL: R$ '+parseFloat(ride.earnings).toFixed(2)+' — '+PLT_LABELS[ride.platform],'real');
+  alertTimer = setTimeout(function(){ el.classList.remove('show'); }, 8000);
+  if (navigator.vibrate) navigator.vibrate([300,80,300,80,500]);
+  showToast('🚨 Nova oferta! R$ '+parseFloat(ride.earnings).toFixed(2),'real');
 }
 
-function escHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g,'&').replace(/</g,'<')
-    .replace(/>/g,'>').replace(/"/g,'&quot;');
-}
-
+// ── FILTROS ───────────────────────────────────────────────────
 function getFiltered() {
   var ganhoMin = parseFloat(document.getElementById('ganhoMinimo').value)||0;
   var raio     = parseFloat(document.getElementById('raioMaximo').value)||5;
   var upos     = userMarker.getPosition();
-  return allRides.filter(function(ride) {
-    if (ride.status !== 'pending')   return false;
-    if (!pltStates[ride.platform])   return false;
-    if (parseFloat(ride.earnings) < ganhoMin) return false;
+  return allRides.filter(function(ride){
+    if (ride.status!=='pending') return false;
+    if (!pltStates[ride.platform]) return false;
+    if (parseFloat(ride.earnings)<ganhoMin) return false;
     var dist = google.maps.geometry.spherical.computeDistanceBetween(
-      upos, new google.maps.LatLng(ride.lat, ride.lng)
+      upos, new google.maps.LatLng(ride.lat,ride.lng)
     )/1000;
-    return dist <= raio;
+    return dist<=raio;
   });
 }
 
+// ═══════════════════════════════════════════════════════════
+// RENDERIZAR OFERTAS — estilo visual do Keeta/iFood
+// ═══════════════════════════════════════════════════════════
 function renderRides() {
   var filtered  = getFiltered();
   var container = document.getElementById('ridesList');
   document.getElementById('ridesBadge').textContent = filtered.length;
+
   if (!filtered.length) {
-    container.innerHTML = '<div class="empty"><span class="empty-icon">🛵</span><span>Aguardando corridas...</span></div>';
+    Object.keys(countdownTimers).forEach(stopCountdown);
+    container.innerHTML='<div class="empty"><span class="empty-icon">🛵</span><span>Aguardando ofertas...</span></div>';
     updateMarkers([]);
     return;
   }
+
   var html = '';
-  for (var i = 0; i < filtered.length; i++) {
-    var ride   = filtered[i];
-    var c      = PLT_COLORS[ride.platform]||'#667eea';
-    var l      = PLT_LABELS[ride.platform]||ride.platform;
-    var isReal = ride.source==='real';
-    html += '<div class="ride-card" data-p="'+ride.platform+'">' +
-      (isReal?'<div class="badge-real">🔴 REAL</div>':'<div class="badge-sim">🔵 SIM</div>') +
-      '<div class="ride-top">' +
-        '<div class="ride-plt">' +
-          '<div class="ride-plt-dot" style="background:'+c+'"></div>' +
-          '<span class="ride-plt-name" style="color:'+c+'">'+l.toUpperCase()+'</span>' +
+  for (var i=0; i<filtered.length; i++) {
+    var ride = filtered[i];
+    var p    = ride.platform;
+    var logo = PLT_LOGOS[p] || p;
+
+    var secsLeft = ride.expiresAt
+      ? Math.max(0, Math.round((new Date(ride.expiresAt).getTime()-Date.now())/1000))
+      : 40;
+    var total = ride.expirySecs || 40;
+    var pct   = total>0 ? Math.round((secsLeft/total)*100) : 0;
+    var urg   = secsLeft<=8;
+
+    // Arco SVG do timer circular
+    var r=26, circ=2*Math.PI*r;
+    var dash = Math.round((pct/100)*circ);
+
+    html +=
+      '<div class="offer-card '+p+'" id="oc-'+ride.id+'">' +
+
+        /* ─ Cabeçalho escuro ─ */
+        '<div class="offer-head">' +
+          '<div>' +
+            '<div class="offer-earn" id="earn-'+ride.id+'">R$ '+parseFloat(ride.earnings).toFixed(2).replace('.',',')+'</div>' +
+          '</div>' +
+          /* Timer circular */
+          '<div class="offer-timer-wrap">' +
+            '<div class="offer-timer-circle'+(urg?' urgente':'')+'" id="tc-'+ride.id+'">' +
+              '<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="'+r+'" stroke="rgba(255,255,255,0.2)" stroke-width="4"/>' +
+              '<circle id="arc-'+ride.id+'" cx="30" cy="30" r="'+r+'" stroke="'+(urg?'#ff4444':'#fff')+'" stroke-width="4" stroke-dasharray="'+dash+' '+circ+'" stroke-dashoffset="0" fill="none" transform="rotate(-90 30 30)"/></svg>' +
+              '<span class="offer-timer-num" id="tn-'+ride.id+'">'+secsLeft+'</span>' +
+            '</div>' +
+            /* Logo */
+            '<div class="offer-logo">'+logo+'</div>' +
+          '</div>' +
         '</div>' +
-        '<span class="ride-earn">R$ '+parseFloat(ride.earnings).toFixed(2)+'</span>' +
-      '</div>' +
-      '<div class="ride-dest">📍 '+escHtml(ride.destination)+'</div>' +
-      '<div class="ride-meta">' +
-        '<span>🛣️ <strong>'+parseFloat(ride.distance).toFixed(1)+' km</strong></span>' +
-        '<span>⏱️ <strong>'+timeAgo(ride.timestamp)+'</strong></span>' +
-      '</div>' +
-      '<div class="ride-actions">' +
-        '<button class="btn-ac" onclick="acceptRide(\''+ride.id+'\',\''+ride.platform+'\','+isReal+')">✅ Aceitar</button>' +
-        '<button class="btn-rj" onclick="rejectRide(\''+ride.id+'\',\''+ride.platform+'\')">❌ Rejeitar</button>' +
-      '</div></div>';
+
+        /* Barra de progresso */
+        '<div class="offer-progress"><div class="offer-progress-fill" id="pb-'+ride.id+'" style="width:'+pct+'%"></div></div>' +
+
+        /* ─ Corpo branco ─ */
+        '<div class="offer-body">' +
+          /* Distância total */
+          '<div class="offer-km">↔ '+parseFloat(ride.distance).toFixed(1)+' km total</div>' +
+          /* Rota */
+          '<div class="offer-route">' +
+            '<div class="offer-row">' +
+              '<span class="offer-icon">🍽️</span>' +
+              '<div><div class="offer-addr">'+escHtml(ride.origem||'Restaurante')+'</div></div>' +
+            '</div>' +
+            '<div class="offer-divider"></div>' +
+            '<div class="offer-row">' +
+              '<span class="offer-icon">📍</span>' +
+              '<div><div class="offer-addr">'+escHtml(ride.destination)+'</div></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        /* ─ Botão ACEITAR ─ */
+        '<div class="offer-btn-wrap">' +
+          '<button class="btn-pegar'+(urg?' urgente':'')+'" id="bp-'+ride.id+'" onclick="acceptRide(\''+ride.id+'\',\''+p+'\')">'+
+            '✅ Pegar ('+secsLeft+'s)'+
+          '</button>' +
+          '<button class="btn-skip" onclick="rejectRide(\''+ride.id+'\',\''+p+'\')">Ignorar oferta</button>' +
+        '</div>' +
+
+      '</div>';
   }
+
   container.innerHTML = html;
   updateMarkers(filtered);
+  filtered.forEach(function(ride){ startCountdown(ride); });
 }
 
-function updateMarkers(rides) {
-  for (var i=0;i<rideMarkers.length;i++) rideMarkers[i].setMap(null);
-  rideMarkers=[];
-  for (var i=0;i<rides.length;i++){
-    var ride=rides[i];
-    var marker=new google.maps.Marker({
-      position:{lat:ride.lat,lng:ride.lng},
-      map:map,icon:PLT_ICONS[ride.platform],
-      title:PLT_LABELS[ride.platform]+' R$'+parseFloat(ride.earnings).toFixed(2)
-    });
-    (function(m,r){
-      var iw=new google.maps.InfoWindow({
-        content:'<div style="padding:8px;font-size:12px">'+
-          '<strong style="color:'+PLT_COLORS[r.platform]+'">'+PLT_LABELS[r.platform]+'</strong>'+
-          (r.source==='real'?' <span style="background:#ea1d2c;color:#fff;padding:1px 5px;border-radius:4px;font-size:10px">REAL</span>':'')+
-          '<br>📍 '+escHtml(r.destination)+
-          '<br>💰 R$ '+parseFloat(r.earnings).toFixed(2)+
-          '<br>🛣️ '+parseFloat(r.distance).toFixed(1)+' km</div>'
-      });
-      m.addListener('click',function(){iw.open(map,m);});
-    })(marker,ride);
-    rideMarkers.push(marker);
+// ── COUNTDOWN ─────────────────────────────────────────────────
+function startCountdown(ride) {
+  if (countdownTimers[ride.id]) return;
+  var total = ride.expirySecs || 40;
+  var circ  = 2*Math.PI*26;
+
+  countdownTimers[ride.id] = setInterval(function(){
+    var s   = Math.max(0, Math.round((new Date(ride.expiresAt).getTime()-Date.now())/1000));
+    var pct = total>0 ? Math.round((s/total)*100) : 0;
+    var urg = s<=8;
+    var dash= Math.round((pct/100)*circ);
+
+    // Atualiza elementos
+    var tn  = document.getElementById('tn-'+ride.id);
+    var tc  = document.getElementById('tc-'+ride.id);
+    var arc = document.getElementById('arc-'+ride.id);
+    var pb  = document.getElementById('pb-'+ride.id);
+    var bp  = document.getElementById('bp-'+ride.id);
+
+    if (tn)  tn.textContent = s;
+    if (tc)  tc.className   = 'offer-timer-circle'+(urg?' urgente':'');
+    if (arc) { arc.setAttribute('stroke-dasharray', dash+' '+circ); arc.setAttribute('stroke', urg?'#ff4444':'#fff'); }
+    if (pb)  pb.style.width = pct+'%';
+    if (bp)  { bp.textContent = '✅ Pegar ('+s+'s)'; bp.className = 'btn-pegar'+(urg?' urgente':''); }
+
+    if (s<=0) {
+      stopCountdown(ride.id);
+      var card = document.getElementById('oc-'+ride.id);
+      if (card) {
+        card.style.opacity='0';
+        card.style.transition='opacity .4s';
+        setTimeout(function(){ fetchRides(); },400);
+      }
+    }
+  }, 1000);
+}
+
+function stopCountdown(id) {
+  if (countdownTimers[id]) { clearInterval(countdownTimers[id]); delete countdownTimers[id]; }
+}
+
+// ── ACEITAR ───────────────────────────────────────────────────
+function acceptRide(rideId, platform) {
+  // Verifica expiração
+  var ride = null;
+  for (var i=0;i<allRides.length;i++){ if(allRides[i].id===rideId){ride=allRides[i];break;} }
+  if (ride && ride.expiresAt && new Date(ride.expiresAt).getTime()<Date.now()) {
+    showToast('⏰ Oferta expirada!','error'); fetchRides(); return;
   }
-}
-
-function acceptRide(rideId, platform, isReal) {
-  if (isReal===true||isReal==='true') {
-    var ride=null;
-    for(var i=0;i<allRides.length;i++){if(allRides[i].id===rideId){ride=allRides[i];break;}}
-    pendingRealRide={rideId:rideId,platform:platform,ride:ride};
-    document.getElementById('modalEarn').textContent='R$ '+parseFloat(ride?ride.earnings:0).toFixed(2);
-    document.getElementById('modalText').innerHTML=
-      '<strong>'+PLT_LABELS[platform]+'</strong><br>'+
-      '📍 '+escHtml(ride?ride.destination:'')+
-      '<br>🛣️ '+(ride?ride.distance:'?')+' km<br><br>MacroDroid vai aceitar no app!';
-    document.getElementById('modalOverlay').classList.add('show');
-    return;
-  }
-  doAccept(rideId, platform);
-}
-
-function confirmAcceptReal() {
-  if (!pendingRealRide) return;
-  closeModal();
-  doAccept(pendingRealRide.rideId, pendingRealRide.platform);
-  showToast('🤖 Abrindo '+PLT_LABELS[pendingRealRide.platform]+'...','info');
-  pendingRealRide=null;
-}
-
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('show');
-  pendingRealRide=null;
-}
-
-function doAccept(rideId, platform) {
   fetch(BACKEND+'/api/accept-ride',{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({rideId:rideId,platform:platform})
   })
   .then(function(r){return r.json();})
   .then(function(data){
-    if(data.success){
-      showToast('✅ Corrida aceita!','success');
+    if (data.success) {
+      showToast('✅ Aceita! MacroDroid vai clicar no app','success');
       document.getElementById('alertReal').classList.remove('show');
+      stopCountdown(rideId);
       fetchRides();
     } else {
-      showToast('❌ Erro ao aceitar','error');
+      showToast(data.reason==='Oferta expirada'?'⏰ Expirada!':'❌ Erro ao aceitar','error');
+      fetchRides();
     }
   })
-  .catch(function(){showToast('❌ Sem conexão','error');});
+  .catch(function(){ showToast('❌ Sem conexão','error'); });
 }
 
+// ── REJEITAR ──────────────────────────────────────────────────
 function rejectRide(rideId, platform) {
   fetch(BACKEND+'/api/reject-ride',{
     method:'POST',headers:{'Content-Type':'application/json'},
@@ -515,26 +591,47 @@ function rejectRide(rideId, platform) {
   })
   .then(function(r){return r.json();})
   .then(function(data){
-    if(data.success){showToast('🗑️ Rejeitada','info');fetchRides();}
+    if (data.success){ stopCountdown(rideId); showToast('🗑️ Ignorada','info'); fetchRides(); }
   });
 }
 
+// ── MARCADORES ───────────────────────────────────────────────
+function updateMarkers(rides) {
+  for (var i=0;i<rideMarkers.length;i++) rideMarkers[i].setMap(null);
+  rideMarkers=[];
+  var icons={ifood:'http://maps.google.com/mapfiles/ms/icons/red-dot.png',ubereats:'http://maps.google.com/mapfiles/ms/icons/purple-dot.png',keeta:'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',loggi:'http://maps.google.com/mapfiles/ms/icons/orange-dot.png'};
+  for (var i=0;i<rides.length;i++){
+    var ride=rides[i];
+    var marker=new google.maps.Marker({
+      position:{lat:ride.lat,lng:ride.lng},map:map,
+      icon:icons[ride.platform],
+      title:PLT_LABELS[ride.platform]+' R$'+parseFloat(ride.earnings).toFixed(2)
+    });
+    (function(m,r){
+      var iw=new google.maps.InfoWindow({content:'<div style="padding:8px;font-size:12px"><strong>'+PLT_LABELS[r.platform]+'</strong><br>💰 R$ '+parseFloat(r.earnings).toFixed(2)+'<br>🛣️ '+parseFloat(r.distance).toFixed(1)+' km<br>📍 '+escHtml(r.destination)+'</div>'});
+      m.addListener('click',function(){iw.open(map,m);});
+    })(marker,ride);
+    rideMarkers.push(marker);
+  }
+}
+
+// ── CONFIG ────────────────────────────────────────────────────
 function saveConfig() {
-  var pos = userMarker.getPosition();
-  var lat = parseFloat(document.getElementById('latInput').value)||pos.lat();
-  var lng = parseFloat(document.getElementById('lngInput').value)||pos.lng();
+  var pos=userMarker.getPosition();
+  var lat=parseFloat(document.getElementById('latInput').value)||pos.lat();
+  var lng=parseFloat(document.getElementById('lngInput').value)||pos.lng();
   fetch(BACKEND+'/api/config',{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      latitude:lat, longitude:lng,
+      latitude:lat,longitude:lng,
       raioMaximo:parseFloat(document.getElementById('raioMaximo').value),
       ganhoMinimo:parseFloat(document.getElementById('ganhoMinimo').value),
       distanciaMaxima:parseFloat(document.getElementById('distanciaMaxima').value)
     })
   })
   .then(function(r){return r.json();})
-  .then(function(data){
-    if(data.success){
+  .then(function(d){
+    if(d.success){
       showToast('💾 Salvo!','success');
       userMarker.setPosition({lat:lat,lng:lng});
       map.panTo({lat:lat,lng:lng});
@@ -546,10 +643,10 @@ function saveConfig() {
 function togglePlatform(p) {
   fetch(BACKEND+'/api/platform/'+p+'/toggle',{method:'POST'})
     .then(function(r){return r.json();})
-    .then(function(data){
-      pltStates[p]=data.enabled;
+    .then(function(d){
+      pltStates[p]=d.enabled;
       var el=document.getElementById('ptoggle-'+p);
-      if(data.enabled){el.classList.remove('off');showToast('✅ '+PLT_LABELS[p]+' ativo','success');}
+      if(d.enabled){el.classList.remove('off');showToast('✅ '+PLT_LABELS[p]+' ativo','success');}
       else{el.classList.add('off');showToast('⏸️ '+PLT_LABELS[p]+' pausado','info');}
       renderRides();
     });
@@ -558,9 +655,7 @@ function togglePlatform(p) {
 function updateStats() {
   ['ifood','ubereats','keeta','loggi'].forEach(function(p){
     var n=0;
-    for(var i=0;i<allRides.length;i++){
-      if(allRides[i].platform===p&&allRides[i].status==='pending')n++;
-    }
+    for(var i=0;i<allRides.length;i++){if(allRides[i].platform===p&&allRides[i].status==='pending')n++;}
     var sv=document.getElementById('st-'+p);
     var sc=document.getElementById('pcnt-'+p);
     if(sv)sv.textContent=n;
@@ -568,26 +663,21 @@ function updateStats() {
   });
 }
 
-function timeAgo(ts) {
-  if(!ts)return '--';
-  var d=Math.floor((Date.now()-new Date(ts))/1000);
-  if(d<60)return d+'s atrás';
-  if(d<3600)return Math.floor(d/60)+'min atrás';
-  return Math.floor(d/3600)+'h atrás';
+function escHtml(s){
+  if(!s)return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 var toastTimer;
 function showToast(msg,type){
   var el=document.getElementById('toast');
-  el.textContent=msg;
-  el.className='toast '+(type||'info')+' show';
+  el.textContent=msg; el.className='toast '+(type||'info')+' show';
   clearTimeout(toastTimer);
   toastTimer=setTimeout(function(){el.classList.remove('show');},3500);
 }
 
 document.getElementById('raioMaximo').addEventListener('change',function(){
-  drawCircle(userMarker.getPosition().toJSON());
-  renderRides();
+  drawCircle(userMarker.getPosition().toJSON()); renderRides();
 });
 document.getElementById('ganhoMinimo').addEventListener('change',renderRides);
 </script>
