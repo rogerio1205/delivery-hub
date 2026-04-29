@@ -1,102 +1,610 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>DeliveryHub</title>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQC2JCQhdB38fTrvmNz_Wbv0arXvmsR8g&libraries=geometry&callback=initMap" async defer></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --primary:#667eea;--success:#28a745;--danger:#dc3545;
-  --ifood:#ea1d2c;--uber:#222;--keeta:#00b4d8;--loggi:#ff6b00;
-  --bg:#f0f2f5;--card:#fff;--border:#e0e0e0;--muted:#888;
-  --shadow:0 4px 18px rgba(0,0,0,.10);--radius:14px;
-}
-body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeliveryHub</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=SUA_API_KEY_AQUI"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(102,126,234,.4)}
-.header h1{font-size:18px;font-weight:800}
-.header p{font-size:11px;opacity:.85;margin-top:1px}
-.hstatus{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700}
-.dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:blink 1.5s infinite}
-@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
-.tbar{height:3px;background:#ddd}
-.tbar-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);animation:tbar 2s linear infinite;transform-origin:left}
-@keyframes tbar{0%{transform:scaleX(1)}100%{transform:scaleX(0)}}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-.layout{display:flex;flex:1;gap:12px;padding:12px;max-width:1400px;margin:0 auto;width:100%}
-.col-left{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
-.col-right{width:340px;display:flex;flex-direction:column;gap:12px;flex-shrink:0}
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
 
-.map-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-#map{height:300px;width:100%}
-.map-foot{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fafafa;border-top:1px solid var(--border)}
-.map-coords{font-size:11px;color:var(--muted)}
-.btn-loc{padding:8px 14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s}
-.btn-loc:hover{background:#5568d3;transform:scale(1.05)}
+        .header h1 {
+            font-size: 20px;
+            margin-bottom: 3px;
+        }
 
-.cfg-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-.cfg-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
-.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.cfg-field label{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px;text-transform:uppercase}
-.cfg-field input{width:100%;padding:9px 10px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:#fafafa;transition:border-color .2s}
-.cfg-field input:focus{outline:none;border-color:var(--primary)}
-.btn-save{width:100%;padding:11px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;transition:transform .2s}
-.btn-save:hover{transform:translateY(-2px)}
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
 
-.plt-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-.plt-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
-.plt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.plt-btn{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;cursor:pointer;border:2px solid transparent;background:#f8f8f8;user-select:none;transition:all .2s}
-.plt-btn.on-ifood{border-color:var(--ifood);background:#fff5f5}
-.plt-btn.on-ubereats{border-color:var(--uber);background:#f5f5f5}
-.plt-btn.on-keeta{border-color:var(--keeta);background:#f0faff}
-.plt-btn.on-loggi{border-color:var(--loggi);background:#fff8f0}
-.plt-btn.off{opacity:.4;border-color:var(--border)!important;background:#f0f0f0!important}
-.plt-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.plt-name{font-size:12px;font-weight:800;flex:1}
-.plt-cnt{font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.07);min-width:22px;text-align:center}
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 10px;
+            padding: 10px;
+            overflow: hidden;
+        }
 
-.stats-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.stat-box{text-align:center;padding:10px 6px;border-radius:10px;border-top:3px solid var(--primary);background:#f5f7ff}
-.stat-box.ifood{border-color:var(--ifood);background:#fff5f5}
-.stat-box.uber{border-color:var(--uber);background:#f5f5f5}
-.stat-box.keeta{border-color:var(--keeta);background:#f0faff}
-.stat-box.loggi{border-color:var(--loggi);background:#fff8f0}
-.stat-v{font-size:20px;font-weight:800;color:#333}
-.stat-l{font-size:10px;color:var(--muted);margin-top:3px;font-weight:700;text-transform:uppercase}
+        /* COLUNA ESQUERDA - MAPA */
+        .map-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
-.rides-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
-.rides-head{padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-.rides-head h3{font-size:15px;font-weight:700}
-.rides-badge{background:var(--primary);color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
-.rides-list{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;max-height:500px}
+        #map {
+            flex: 1;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid #e0e0e0;
+        }
 
-.ride-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;border-left:5px solid var(--primary);animation:slideIn .3s ease-out;position:relative;transition:all .2s}
-@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
-.ride-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
-.ride-card[data-p="ifood"]{border-left-color:var(--ifood)}
-.ride-card[data-p="ubereats"]{border-left-color:var(--uber)}
-.ride-card[data-p="keeta"]{border-left-color:var(--keeta)}
-.ride-card[data-p="loggi"]{border-left-color:var(--loggi)}
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
 
-.badge-real{position:absolute;top:8px;right:8px;background:#ea1d2c;color:#fff;font-size:9px;font-weight:800;padding:3px 9px;border-radius:8px;animation:blink .8s infinite}
-.badge-sim{position:absolute;top:8px;right:8px;background:#667eea;color:#fff;font-size:9px;font-weight:800;padding:3px 9px;border-radius:8px}
+        .control-group {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
 
-.ride-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-right:65px}
-.ride-plt{display:flex;align-items:center;gap:5px}
-.ride-plt-dot{width:8px;height:8px;border-radius:50%}
-.ride-plt-name{font-size:12px;font-weight:800;letter-spacing:.5px}
-.ride-earn{font-size:18px;font-weight:800;color:var(--success)}
-.ride-dest{background:#f5f7ff;border-left:3px solid var(--primary);padding:6px 10px;border-radius:0 8px 8px 0;font-size:12px;margin-bottom:8px}
-.ride-meta{display:flex;gap:12px;margin-bottom:10px}
-.ride-meta span{font-size:11px;color:var(--muted)}
-.ride-meta strong{color:#333;font-size:12px}
-.ride-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.btn-ac,.btn-rj{padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .2s}
-.btn-ac{background:var(--success);color:#fff}
-.btn-ac:hover{background:#20c997;transform:translateY(-1px)}
-.btn-rj{background:var(
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
 
+        .control-group input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .control-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-location {
+            width: 100%;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .btn-location:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        /* COLUNA DIREITA - CORRIDAS */
+        .rides-section {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .rides-header {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .rides-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ride-card {
+            background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid #667eea;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .ride-card:hover {
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .ride-card.ifood {
+            border-left-color: #ea1d2c;
+        }
+
+        .ride-card.uber {
+            border-left-color: #000000;
+        }
+
+        .ride-card.keeta {
+            border-left-color: #00d4ff;
+        }
+
+        .ride-card.loggi {
+            border-left-color: #ff6b00;
+        }
+
+        .ride-platform {
+            font-weight: bold;
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .ride-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .ride-info-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .ride-info-label {
+            color: #999;
+        }
+
+        .ride-info-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .ride-destination {
+            background: #f0f4ff;
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #333;
+            margin-bottom: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .ride-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .btn-accept {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-accept:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-reject:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .stat {
+            background: #f0f4ff;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 3px solid #667eea;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        .message {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            background: #28a745;
+            color: white;
+            border-radius: 8px;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .rides-section {
+                width: 100%;
+                max-height: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .rides-section {
+                width: 100%;
+                max-height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚗 DeliveryHub</h1>
+        <p>Monitor de Corridas em Tempo Real</p>
+    </div>
+
+    <div class="container">
+        <!-- MAPA -->
+        <div class="map-section">
+            <div id="map"></div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>Raio (km)</label>
+                    <input type="number" id="raioMaximo" value="5" min="1" max="50" onchange="updateMap()">
+                </div>
+                <div class="control-group">
+                    <label>Ganho Mín (R$)</label>
+                    <input type="number" id="ganhoMinimo" value="15" min="0" step="0.50" onchange="filterRides()">
+                </div>
+            </div>
+
+            <button class="btn-location" onclick="getLocation()">📍 Minha Localização</button>
+        </div>
+
+        <!-- CORRIDAS -->
+        <div class="rides-section">
+            <div class="rides-header">📦 Corridas</div>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="totalRides">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="pendingRides">0</div>
+                    <div class="stat-label">Pendentes</div>
+                </div>
+            </div>
+
+            <div class="rides-list" id="ridesList">
+                <div class="empty-state">Aguardando corridas...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <script>
+        let map;
+        let userMarker;
+        let rideMarkers = [];
+        let circle;
+        let allRides = [];
+        let filteredRides = [];
+
+        function initMap() {
+            const defaultLat = -23.5505;
+            const defaultLng = -46.6333;
+
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 14,
+                center: { lat: defaultLat, lng: defaultLng },
+                mapTypeControl: false,
+                fullscreenControl: true,
+                zoomControl: true,
+                streetViewControl: false
+            });
+
+            userMarker = new google.maps.Marker({
+                position: { lat: defaultLat, lng: defaultLng },
+                map: map,
+                title: 'Sua Localização',
+                icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+            });
+
+            updateMap();
+            getLocation();
+            fetchRides();
+            setInterval(fetchRides, 2000);
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+
+                        userMarker.setPosition({ lat, lng });
+                        map.setCenter({ lat, lng });
+                        updateMap();
+                        showMessage('✅ Localização obtida!');
+                    },
+                    function(error) {
+                        console.error('Erro:', error);
+                    }
+                );
+            }
+        }
+
+        function updateMap() {
+            const lat = userMarker.getPosition().lat();
+            const lng = userMarker.getPosition().lng();
+            const raio = parseFloat(document.getElementById('raioMaximo').value);
+
+            if (circle) circle.setMap(null);
+
+            circle = new google.maps.Circle({
+                center: { lat, lng },
+                radius: raio * 1000,
+                map: map,
+                fillColor: '#667eea',
+                fillOpacity: 0.15,
+                strokeColor: '#667eea',
+                strokeOpacity: 0.6,
+                strokeWeight: 2
+            });
+
+            filterRides();
+        }
+
+        function fetchRides() {
+            fetch('/api/rides')
+                .then(response => response.json())
+                .then(data => {
+                    allRides = data;
+                    filterRides();
+                })
+                .catch(error => console.error('Erro:', error));
+        }
+
+        function filterRides() {
+            const ganhoMinimo = parseFloat(document.getElementById('ganhoMinimo').value);
+            const lat = userMarker.getPosition().lat();
+            const lng = userMarker.getPosition().lng();
+            const raio = parseFloat(document.getElementById('raioMaximo').value);
+
+            filteredRides = allRides.filter(ride => {
+                const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(lat, lng),
+                    new google.maps.LatLng(ride.lat, ride.lng)
+                ) / 1000;
+
+                return ride.earnings >= ganhoMinimo && distance <= raio && ride.status === 'pending';
+            });
+
+            displayRides();
+            updateMarkers();
+            updateStats();
+        }
+
+        function displayRides() {
+            const container = document.getElementById('ridesList');
+
+            if (filteredRides.length === 0) {
+                container.innerHTML = '<div class="empty-state">Nenhuma corrida disponível</div>';
+                return;
+            }
+
+            container.innerHTML = filteredRides.map(ride => `
+                <div class="ride-card ${ride.platform}">
+                    <div class="ride-platform">${ride.platform.toUpperCase()}</div>
+                    <div class="ride-info">
+                        <div class="ride-info-item">
+                            <span class="ride-info-label">Distância</span>
+                            <span class="ride-info-value">${ride.distance.toFixed(1)}km</span>
+                        </div>
+                        <div class="ride-info-item">
+                            <span class="ride-info-label">Ganho</span>
+                            <span class="ride-info-value">R$${ride.earnings.toFixed(0)}</span>
+                        </div>
+                    </div>
+                    <div class="ride-destination">📍 ${ride.destination}</div>
+                    <div class="ride-actions">
+                        <button class="btn-accept" onclick="acceptRide('${ride.id}', '${ride.platform}')">✅ Aceitar</button>
+                        <button class="btn-reject" onclick="rejectRide('${ride.id}', '${ride.platform}')">❌ Rejeitar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateMarkers() {
+            rideMarkers.forEach(marker => marker.setMap(null));
+            rideMarkers = [];
+
+            const colors = {
+                ifood: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                uber: 'http://maps.google.com/mapfiles/ms/icons/black-dot.png',
+                keeta: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                loggi: 'http://maps.google.com/mapfiles/ms/icons/orange-dot.png'
+            };
+
+            filteredRides.forEach(ride => {
+                const marker = new google.maps.Marker({
+                    position: { lat: ride.lat, lng: ride.lng },
+                    map: map,
+                    icon: colors[ride.platform],
+                    title: `${ride.platform} - R$${ride.earnings.toFixed(0)}`
+                });
+
+                marker.addListener('click', () => {
+                    new google.maps.InfoWindow({
+                        content: `<div style="padding:8px;font-size:12px"><strong>${ride.platform.toUpperCase()}</strong><br>📍 ${ride.destination}<br>💰 R$${ride.earnings.toFixed(2)}</div>`
+                    }).open(map, marker);
+                });
+
+                rideMarkers.push(marker);
+            });
+        }
+
+        function acceptRide(rideId, platform) {
+            fetch('/api/accept-ride', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rideId, platform })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('✅ Corrida aceita!');
+                    fetchRides();
+                }
+            });
+        }
+
+        function rejectRide(rideId, platform) {
+            fetch('/api/reject-ride', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rideId, platform })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    fetchRides();
+                }
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('totalRides').textContent = filteredRides.length;
+            document.getElementById('pendingRides').textContent = filteredRides.filter(r => r.status === 'pending').length;
+        }
+
+        function showMessage(text) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.classList.add('show');
+            setTimeout(() => msg.classList.remove('show'), 3000);
+        }
+
+        window.addEventListener('load', initMap);
+    </script>
+</body>
+</html>
