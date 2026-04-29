@@ -1,920 +1,102 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <title>DeliveryHub — Monitor em Tempo Real</title>
-    <style>
-        /* ========================================
-           RESET & BASE
-        ======================================== */
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>DeliveryHub</title>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQC2JCQhdB38fTrvmNz_Wbv0arXvmsR8g&libraries=geometry&callback=initMap" async defer></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#667eea;--success:#28a745;--danger:#dc3545;
+  --ifood:#ea1d2c;--uber:#222;--keeta:#00b4d8;--loggi:#ff6b00;
+  --bg:#f0f2f5;--card:#fff;--border:#e0e0e0;--muted:#888;
+  --shadow:0 4px 18px rgba(0,0,0,.10);--radius:14px;
+}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+
+.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(102,126,234,.4)}
+.header h1{font-size:18px;font-weight:800}
+.header p{font-size:11px;opacity:.85;margin-top:1px}
+.hstatus{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+.tbar{height:3px;background:#ddd}
+.tbar-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);animation:tbar 2s linear infinite;transform-origin:left}
+@keyframes tbar{0%{transform:scaleX(1)}100%{transform:scaleX(0)}}
+
+.layout{display:flex;flex:1;gap:12px;padding:12px;max-width:1400px;margin:0 auto;width:100%}
+.col-left{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
+.col-right{width:340px;display:flex;flex-direction:column;gap:12px;flex-shrink:0}
+
+.map-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+#map{height:300px;width:100%}
+.map-foot{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fafafa;border-top:1px solid var(--border)}
+.map-coords{font-size:11px;color:var(--muted)}
+.btn-loc{padding:8px 14px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s}
+.btn-loc:hover{background:#5568d3;transform:scale(1.05)}
+
+.cfg-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.cfg-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.cfg-field label{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px;text-transform:uppercase}
+.cfg-field input{width:100%;padding:9px 10px;border:2px solid var(--border);border-radius:8px;font-size:13px;background:#fafafa;transition:border-color .2s}
+.cfg-field input:focus{outline:none;border-color:var(--primary)}
+.btn-save{width:100%;padding:11px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;transition:transform .2s}
+.btn-save:hover{transform:translateY(-2px)}
+
+.plt-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.plt-card h3{font-size:14px;font-weight:700;margin-bottom:12px}
+.plt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.plt-btn{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;cursor:pointer;border:2px solid transparent;background:#f8f8f8;user-select:none;transition:all .2s}
+.plt-btn.on-ifood{border-color:var(--ifood);background:#fff5f5}
+.plt-btn.on-ubereats{border-color:var(--uber);background:#f5f5f5}
+.plt-btn.on-keeta{border-color:var(--keeta);background:#f0faff}
+.plt-btn.on-loggi{border-color:var(--loggi);background:#fff8f0}
+.plt-btn.off{opacity:.4;border-color:var(--border)!important;background:#f0f0f0!important}
+.plt-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.plt-name{font-size:12px;font-weight:800;flex:1}
+.plt-cnt{font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.07);min-width:22px;text-align:center}
+
+.stats-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat-box{text-align:center;padding:10px 6px;border-radius:10px;border-top:3px solid var(--primary);background:#f5f7ff}
+.stat-box.ifood{border-color:var(--ifood);background:#fff5f5}
+.stat-box.uber{border-color:var(--uber);background:#f5f5f5}
+.stat-box.keeta{border-color:var(--keeta);background:#f0faff}
+.stat-box.loggi{border-color:var(--loggi);background:#fff8f0}
+.stat-v{font-size:20px;font-weight:800;color:#333}
+.stat-l{font-size:10px;color:var(--muted);margin-top:3px;font-weight:700;text-transform:uppercase}
+
+.rides-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+.rides-head{padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.rides-head h3{font-size:15px;font-weight:700}
+.rides-badge{background:var(--primary);color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
+.rides-list{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;max-height:500px}
+
+.ride-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px;border-left:5px solid var(--primary);animation:slideIn .3s ease-out;position:relative;transition:all .2s}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.ride-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.ride-card[data-p="ifood"]{border-left-color:var(--ifood)}
+.ride-card[data-p="ubereats"]{border-left-color:var(--uber)}
+.ride-card[data-p="keeta"]{border-left-color:var(--keeta)}
+.ride-card[data-p="loggi"]{border-left-color:var(--loggi)}
+
+.badge-real{position:absolute;top:8px;right:8px;background:#ea1d2c;color:#fff;font-size:9px;font-weight:800;padding:3px 9px;border-radius:8px;animation:blink .8s infinite}
+.badge-sim{position:absolute;top:8px;right:8px;background:#667eea;color:#fff;font-size:9px;font-weight:800;padding:3px 9px;border-radius:8px}
+
+.ride-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-right:65px}
+.ride-plt{display:flex;align-items:center;gap:5px}
+.ride-plt-dot{width:8px;height:8px;border-radius:50%}
+.ride-plt-name{font-size:12px;font-weight:800;letter-spacing:.5px}
+.ride-earn{font-size:18px;font-weight:800;color:var(--success)}
+.ride-dest{background:#f5f7ff;border-left:3px solid var(--primary);padding:6px 10px;border-radius:0 8px 8px 0;font-size:12px;margin-bottom:8px}
+.ride-meta{display:flex;gap:12px;margin-bottom:10px}
+.ride-meta span{font-size:11px;color:var(--muted)}
+.ride-meta strong{color:#333;font-size:12px}
+.ride-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.btn-ac,.btn-rj{padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .2s}
+.btn-ac{background:var(--success);color:#fff}
+.btn-ac:hover{background:#20c997;transform:translateY(-1px)}
+.btn-rj{background:var(--
 
-        html, body {
-            height: 100%;
-        }
-
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #0f1117;
-            color: #e0e0e0;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* ========================================
-           HEADER
-        ======================================== */
-        header {
-            background: linear-gradient(135deg, #1a1d27, #252836);
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #2e3347;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
-        }
-
-        .header-title {
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: -0.3px;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #4ade80;
-            animation: pulse 2s infinite;
-            flex-shrink: 0;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50%       { opacity: 0.5; transform: scale(1.4); }
-        }
-
-        .status-label {
-            font-size: 0.78rem;
-            color: #4ade80;
-            font-weight: 700;
-        }
-
-        .status-label.offline { color: #ef4444; }
-
-        /* ========================================
-           CONTAINER
-        ======================================== */
-        .container {
-            max-width: 860px;
-            margin: 0 auto;
-            padding: 14px 14px 80px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        /* ========================================
-           CARD BASE
-        ======================================== */
-        .card {
-            background: #1a1d27;
-            border-radius: 14px;
-            padding: 16px;
-            border: 1px solid #2e3347;
-        }
-
-        .card-title {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: #6b7491;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* ========================================
-           PLATAFORMAS
-        ======================================== */
-        .platforms-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        .platform-btn {
-            background: #252836;
-            border: 2px solid #3a3f55;
-            border-radius: 12px;
-            padding: 14px 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .platform-btn:active { transform: scale(0.95); }
-
-        .platform-btn.active  { border-color: #4ade80; background: #1e2d1e; }
-        .platform-btn.inactive { border-color: #ef4444; opacity: 0.45; background: #2d1e1e; }
-
-        .p-icon  { font-size: 1.5rem; line-height: 1; }
-        .p-count {
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: #fff;
-            margin: 4px 0 2px;
-            line-height: 1;
-        }
-        .p-name  { font-size: 0.68rem; color: #6b7491; font-weight: 600; }
-
-        /* ========================================
-           FILTROS
-        ======================================== */
-        .filters-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        .filter-item { display: flex; flex-direction: column; gap: 5px; }
-
-        .filter-item label {
-            font-size: 0.72rem;
-            color: #6b7491;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .filter-item input {
-            width: 100%;
-            background: #252836;
-            border: 1px solid #3a3f55;
-            border-radius: 8px;
-            color: #fff;
-            padding: 9px 12px;
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color 0.2s;
-            -webkit-appearance: none;
-        }
-
-        .filter-item input:focus { border-color: #6366f1; }
-
-        .btn-save {
-            grid-column: 1 / -1;
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-            border: none;
-            border-radius: 10px;
-            color: #fff;
-            font-weight: 700;
-            padding: 11px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: opacity 0.2s, transform 0.1s;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .btn-save:hover  { opacity: 0.88; }
-        .btn-save:active { transform: scale(0.97); }
-
-        /* ========================================
-           CORRIDAS — LISTA
-        ======================================== */
-        .rides-header {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 14px;
-        }
-
-        .rides-header .card-title { margin-bottom: 0; flex: 1; }
-
-        .rides-counter {
-            font-size: 0.72rem;
-            background: #252836;
-            border: 1px solid #3a3f55;
-            color: #9aa0b8;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        #rides-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        /* EMPTY STATE */
-        .empty-state {
-            text-align: center;
-            padding: 36px 16px;
-            color: #3a3f55;
-        }
-
-        .empty-state .empty-icon { font-size: 3rem; }
-        .empty-state .empty-title { font-size: 1rem; font-weight: 700; color: #4a5068; margin-top: 10px; }
-        .empty-state .empty-sub   { font-size: 0.8rem; color: #3a3f55; margin-top: 4px; }
-
-        /* ========================================
-           CARD DE CORRIDA
-        ======================================== */
-        .ride-card {
-            background: #252836;
-            border-radius: 14px;
-            padding: 14px;
-            border-left: 4px solid transparent;
-            animation: slideIn 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.2s, opacity 0.3s;
-        }
-
-        .ride-card:hover { transform: translateY(-1px); }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-12px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Cores por plataforma */
-        .ride-card.ifood    { border-left-color: #ef4444; }
-        .ride-card.ubereats { border-left-color: #22c55e; }
-        .ride-card.keeta    { border-left-color: #f59e0b; }
-        .ride-card.loggi    { border-left-color: #3b82f6; }
-
-        /* Badge REAL vs SIM */
-        .badge-source {
-            display: inline-block;
-            font-size: 0.6rem;
-            font-weight: 800;
-            padding: 2px 7px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        .badge-source.real { background: #ef4444; color: #fff; animation: blink 1.2s infinite; }
-        .badge-source.simulated { background: #3a3f55; color: #6b7491; }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.4; }
-        }
-
-        .ride-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            gap: 8px;
-        }
-
-        .ride-header-left {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .ride-platform-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #9aa0b8;
-            text-transform: uppercase;
-        }
-
-        .ride-earnings {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: #4ade80;
-            line-height: 1;
-        }
-
-        .ride-destination {
-            font-size: 0.83rem;
-            color: #c0c6d9;
-            margin-bottom: 10px;
-            line-height: 1.45;
-            word-break: break-word;
-        }
-
-        .ride-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            font-size: 0.75rem;
-            color: #6b7491;
-            margin-bottom: 12px;
-        }
-
-        .ride-meta span {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .ride-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-accept, .btn-reject {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.15s;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .btn-accept:active, .btn-reject:active { transform: scale(0.96); }
-
-        .btn-accept {
-            background: #4ade80;
-            color: #0a1a0a;
-        }
-
-        .btn-accept:hover { background: #22c55e; }
-
-        .btn-reject {
-            background: #2e3347;
-            color: #9aa0b8;
-        }
-
-        .btn-reject:hover { background: #ef4444; color: #fff; }
-
-        /* ========================================
-           MODAL
-        ======================================== */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.78);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-            padding: 20px;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-overlay.hidden { display: none; }
-
-        .modal {
-            background: #1a1d27;
-            border-radius: 18px;
-            padding: 26px 22px;
-            max-width: 360px;
-            width: 100%;
-            border: 1px solid #3a3f55;
-            animation: popIn 0.22s ease;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-        }
-
-        @keyframes popIn {
-            from { transform: scale(0.88); opacity: 0; }
-            to   { transform: scale(1);    opacity: 1; }
-        }
-
-        .modal-icon { font-size: 2.2rem; margin-bottom: 10px; }
-        .modal h2   { font-size: 1.15rem; color: #fff; margin-bottom: 6px; }
-        .modal p    { font-size: 0.85rem; color: #9aa0b8; margin-bottom: 20px; line-height: 1.5; }
-
-        .modal-earnings {
-            font-size: 2rem;
-            font-weight: 900;
-            color: #4ade80;
-            margin: 8px 0;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .modal-actions button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .modal-actions .btn-modal-accept {
-            background: #4ade80;
-            color: #0a1a0a;
-        }
-
-        .modal-actions .btn-modal-accept:hover { background: #22c55e; }
-
-        .modal-actions .btn-modal-cancel {
-            background: #2e3347;
-            color: #9aa0b8;
-        }
-
-        .modal-actions .btn-modal-cancel:hover { background: #3a3f55; }
-
-        /* ========================================
-           TOAST
-        ======================================== */
-        #toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: #252836;
-            color: #fff;
-            padding: 12px 22px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border: 1px solid #3a3f55;
-            opacity: 0;
-            transition: opacity 0.3s, transform 0.3s;
-            z-index: 1000;
-            pointer-events: none;
-            white-space: nowrap;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-        }
-
-        #toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        /* ========================================
-           RESPONSIVO
-        ======================================== */
-        @media (max-width: 500px) {
-            .platforms-grid { grid-template-columns: repeat(2, 1fr); }
-            .filters-grid   { grid-template-columns: 1fr; }
-            .ride-earnings  { font-size: 1.3rem; }
-            .header-title   { font-size: 1.1rem; }
-        }
-    </style>
-</head>
-<body>
-
-<!-- ====== HEADER ====== -->
-<header>
-    <div class="header-title">🚗 DeliveryHub</div>
-    <div class="header-right">
-        <span class="status-dot" id="statusDot"></span>
-        <span class="status-label" id="statusLabel">Online</span>
-    </div>
-</header>
-
-<!-- ====== CONTEÚDO ====== -->
-<div class="container">
-
-    <!-- PLATAFORMAS -->
-    <div class="card">
-        <div class="card-title">📱 Plataformas <small style="margin-left:4px;font-size:0.65rem;color:#4a5068;">(toque para ativar/desativar)</small></div>
-        <div class="platforms-grid">
-            <div class="platform-btn active" id="btn-ifood" onclick="togglePlatform('ifood')">
-                <div class="p-icon">🍔</div>
-                <div class="p-count" id="count-ifood">0</div>
-                <div class="p-name">iFood</div>
-            </div>
-            <div class="platform-btn active" id="btn-ubereats" onclick="togglePlatform('ubereats')">
-                <div class="p-icon">🟢</div>
-                <div class="p-count" id="count-ubereats">0</div>
-                <div class="p-name">Uber Eats</div>
-            </div>
-            <div class="platform-btn active" id="btn-keeta" onclick="togglePlatform('keeta')">
-                <div class="p-icon">⚡</div>
-                <div class="p-count" id="count-keeta">0</div>
-                <div class="p-name">Keeta</div>
-            </div>
-            <div class="platform-btn active" id="btn-loggi" onclick="togglePlatform('loggi')">
-                <div class="p-icon">📦</div>
-                <div class="p-count" id="count-loggi">0</div>
-                <div class="p-name">Loggi</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- FILTROS -->
-    <div class="card">
-        <div class="card-title">⚙️ Filtros & Localização</div>
-        <div class="filters-grid">
-            <div class="filter-item">
-                <label>Raio (km)</label>
-                <input type="number" id="raioMaximo" min="1" max="50" step="0.5" placeholder="5" />
-            </div>
-            <div class="filter-item">
-                <label>Ganho Mínimo (R$)</label>
-                <input type="number" id="ganhoMinimo" min="0" max="500" step="1" placeholder="15" />
-            </div>
-            <div class="filter-item">
-                <label>Dist. Máxima (km)</label>
-                <input type="number" id="distanciaMaxima" min="1" max="100" step="1" placeholder="10" />
-            </div>
-            <div class="filter-item">
-                <label>Latitude</label>
-                <input type="number" id="latitude" step="0.00001" placeholder="-23.6821" />
-            </div>
-            <div class="filter-item">
-                <label>Longitude</label>
-                <input type="number" id="longitude" step="0.00001" placeholder="-46.5650" />
-            </div>
-            <button class="btn-save" onclick="saveConfig()">💾 Salvar Configurações</button>
-        </div>
-    </div>
-
-    <!-- CORRIDAS -->
-    <div class="card">
-        <div class="rides-header">
-            <div class="card-title">🛵 Corridas Disponíveis</div>
-            <span class="rides-counter" id="ridesCounter">0</span>
-        </div>
-        <div id="rides-list">
-            <div class="empty-state">
-                <div class="empty-icon">🛵</div>
-                <div class="empty-title">Aguardando corridas...</div>
-                <div class="empty-sub">As notificações do MacroDroid aparecerão aqui</div>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<!-- ====== MODAL ACEITAR ====== -->
-<div class="modal-overlay hidden" id="confirmModal">
-    <div class="modal">
-        <div class="modal-icon">🚨</div>
-        <h2>Confirmar Aceitação?</h2>
-        <div class="modal-earnings" id="modalEarnings">R$ 0,00</div>
-        <p id="modalDetails">Detalhes da corrida...</p>
-        <div class="modal-actions">
-            <button class="btn-modal-accept" onclick="confirmAccept()">✅ Aceitar</button>
-            <button class="btn-modal-cancel" onclick="closeModal()">❌ Cancelar</button>
-        </div>
-    </div>
-</div>
-
-<!-- ====== TOAST ====== -->
-<div id="toast"></div>
-
-<!-- ====== JAVASCRIPT ====== -->
-<script>
-    'use strict';
-
-    // ============================================
-    // ESTADO GLOBAL
-    // ============================================
-    const API = '';  // mesmo domínio
-
-    let pendingRideId       = null;
-    let pendingRidePlatform = null;
-    let knownRideIds        = new Set();
-    let platformStates      = { ifood: true, ubereats: true, keeta: true, loggi: true };
-    let toastTimer          = null;
-
-    // ============================================
-    // UTILITÁRIOS
-    // ============================================
-    function showToast(msg, duration) {
-        duration = duration || 3000;
-        const toast = document.getElementById('toast');
-        toast.textContent = msg;
-        toast.classList.add('show');
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
-    }
-
-    function formatTime(ts) {
-        return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    function formatMoney(val) {
-        return 'R$ ' + parseFloat(val).toFixed(2).replace('.', ',');
-    }
-
-    function platformLabel(p) {
-        const map = { ifood: 'iFood', ubereats: 'Uber Eats', keeta: 'Keeta', loggi: 'Loggi' };
-        return map[p] || p;
-    }
-
-    function platformIcon(p) {
-        const map = { ifood: '🍔', ubereats: '🟢', keeta: '⚡', loggi: '📦' };
-        return map[p] || '🚗';
-    }
-
-    function escapeSingleQuotes(str) {
-        return (str || '').replace(/'/g, "\\'");
-    }
-
-    // ============================================
-    // CARREGAR CONFIG
-    // ============================================
-    async function loadConfig() {
-        try {
-            const res  = await fetch(API + '/api/config');
-            const json = await res.json();
-            const cfg  = json.data || json;
-
-            document.getElementById('raioMaximo').value      = cfg.raioMaximo      || '';
-            document.getElementById('ganhoMinimo').value     = cfg.ganhoMinimo     || '';
-            document.getElementById('distanciaMaxima').value = cfg.distanciaMaxima || '';
-            document.getElementById('latitude').value        = cfg.latitude        || '';
-            document.getElementById('longitude').value       = cfg.longitude       || '';
-        } catch (e) {
-            console.error('[CONFIG] Erro ao carregar:', e);
-        }
-    }
-
-    // ============================================
-    // SALVAR CONFIG
-    // ============================================
-    async function saveConfig() {
-        const body = {
-            raioMaximo:      parseFloat(document.getElementById('raioMaximo').value)      || 5,
-            ganhoMinimo:     parseFloat(document.getElementById('ganhoMinimo').value)     || 15,
-            distanciaMaxima: parseFloat(document.getElementById('distanciaMaxima').value) || 10,
-            latitude:        parseFloat(document.getElementById('latitude').value)        || -23.6821,
-            longitude:       parseFloat(document.getElementById('longitude').value)       || -46.5650
-        };
-
-        try {
-            const res  = await fetch(API + '/api/config', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify(body)
-            });
-            const json = await res.json();
-            showToast(json.success ? '✅ Configurações salvas!' : '❌ Erro ao salvar');
-        } catch (e) {
-            showToast('❌ Sem conexão com o servidor');
-        }
-    }
-
-    // ============================================
-    // TOGGLE PLATAFORMA
-    // ============================================
-    async function togglePlatform(platform) {
-        try {
-            const res  = await fetch(API + '/api/platform/' + platform + '/toggle', { method: 'POST' });
-            const json = await res.json();
-
-            if (json.success) {
-                platformStates[platform] = json.enabled;
-                const btn = document.getElementById('btn-' + platform);
-                if (json.enabled) {
-                    btn.classList.add('active');
-                    btn.classList.remove('inactive');
-                } else {
-                    btn.classList.remove('active');
-                    btn.classList.add('inactive');
-                }
-                showToast(platformLabel(platform) + ': ' + (json.enabled ? '✅ Ativo' : '❌ Pausado'));
-            }
-        } catch (e) {
-            showToast('❌ Erro ao alternar plataforma');
-        }
-    }
-
-    // ============================================
-    // BUSCAR CORRIDAS (polling)
-    // ============================================
-    async function fetchRides() {
-        try {
-            const res   = await fetch(API + '/api/rides');
-            const rides = await res.json();
-
-            // Status: online
-            document.getElementById('statusDot').style.background = '#4ade80';
-            document.getElementById('statusLabel').textContent    = 'Online';
-            document.getElementById('statusLabel').className      = 'status-label';
-
-            renderRides(rides);
-            updateCounters(rides);
-
-        } catch (e) {
-            document.getElementById('statusDot').style.background = '#ef4444';
-            document.getElementById('statusLabel').textContent    = 'Offline';
-            document.getElementById('statusLabel').className      = 'status-label offline';
-        }
-    }
-
-    // ============================================
-    // RENDERIZAR CORRIDAS
-    // ============================================
-    function renderRides(rides) {
-        const list = document.getElementById('rides-list');
-
-        // Atualizar contador
-        document.getElementById('ridesCounter').textContent = rides.length;
-
-        if (rides.length === 0) {
-            list.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">🛵</div>
-                    <div class="empty-title">Nenhuma corrida disponível</div>
-                    <div class="empty-sub">Aguardando notificações do MacroDroid...</div>
-                </div>`;
-            return;
-        }
-
-        // Detectar novas corridas
-        const newRides = rides.filter(r => !knownRideIds.has(r.id));
-        newRides.forEach(r => knownRideIds.add(r.id));
-
-        if (newRides.length > 0) {
-            const realNew = newRides.filter(r => r.source === 'real');
-            if (realNew.length > 0) {
-                showToast('🚨 ' + realNew.length + ' corrida(s) REAL(is) chegou!', 5000);
-            } else {
-                showToast('🎮 ' + newRides.length + ' nova(s) corrida(s)');
-            }
-        }
-
-        list.innerHTML = rides.map(ride => {
-            const isReal = ride.source === 'real';
-            const safeDestination = escapeSingleQuotes(ride.destination);
-            return `
-            <div class="ride-card ${ride.platform}" id="ride-${ride.id}">
-                <div class="ride-header">
-                    <div class="ride-header-left">
-                        <div class="ride-platform-row">
-                            ${platformIcon(ride.platform)}
-                            ${platformLabel(ride.platform)}
-                            <span class="badge-source ${isReal ? 'real' : 'simulated'}">
-                                ${isReal ? '🔴 REAL' : '🎮 SIM'}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="ride-earnings">${formatMoney(ride.earnings)}</div>
-                </div>
-
-                <div class="ride-destination">📍 ${ride.destination}</div>
-
-                <div class="ride-meta">
-                    <span>📏 ${ride.distance} km</span>
-                    <span>🕐 ${formatTime(ride.timestamp)}</span>
-                </div>
-
-                <div class="ride-actions">
-                    <button class="btn-accept"
-                        onclick="askAccept('${ride.id}', '${ride.platform}', '${ride.earnings}', '${safeDestination}')">
-                        ✅ Aceitar
-                    </button>
-                    <button class="btn-reject"
-                        onclick="rejectRide('${ride.id}', '${ride.platform}')">
-                        ❌ Rejeitar
-                    </button>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    // ============================================
-    // ATUALIZAR CONTADORES DAS PLATAFORMAS
-    // ============================================
-    function updateCounters(rides) {
-        const counts = { ifood: 0, ubereats: 0, keeta: 0, loggi: 0 };
-        rides.forEach(r => {
-            if (counts[r.platform] !== undefined) counts[r.platform]++;
-        });
-        Object.keys(counts).forEach(p => {
-            document.getElementById('count-' + p).textContent = counts[p];
-        });
-    }
-
-    // ============================================
-    // MODAL — CONFIRMAR ACEITE
-    // ============================================
-    function askAccept(rideId, platform, earnings, destination) {
-        pendingRideId       = rideId;
-        pendingRidePlatform = platform;
-
-        document.getElementById('modalEarnings').textContent = formatMoney(earnings);
-        document.getElementById('modalDetails').innerHTML    =
-            '<strong>' + platformLabel(platform) + '</strong><br>📍 ' + destination;
-
-        document.getElementById('confirmModal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-        pendingRideId       = null;
-        pendingRidePlatform = null;
-        document.getElementById('confirmModal').classList.add('hidden');
-    }
-
-    async function confirmAccept() {
-        if (!pendingRideId) return;
-
-        const rideId   = pendingRideId;
-        const platform = pendingRidePlatform;
-        closeModal();
-
-        try {
-            const res  = await fetch(API + '/api/accept-ride', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ rideId, platform })
-            });
-            const json = await res.json();
-
-            if (json.success) {
-                showToast(json.isReal
-                    ? '✅ Corrida REAL aceita! Abrindo app...'
-                    : '✅ Corrida aceita!', 4000);
-
-                // Remove o card visualmente
-                const card = document.getElementById('ride-' + rideId);
-                if (card) {
-                    card.style.opacity   = '0';
-                    card.style.transform = 'scale(0.95)';
-                    setTimeout(() => { if (card.parentNode) card.remove(); }, 300);
-                }
-                knownRideIds.delete(rideId);
-            } else {
-                showToast('❌ ' + (json.reason || 'Erro ao aceitar'));
-            }
-        } catch (e) {
-            showToast('❌ Sem conexão com o servidor');
-        }
-    }
-
-    // ============================================
-    // REJEITAR CORRIDA
-    // ============================================
-    async function rejectRide(rideId, platform) {
-        try {
-            const res  = await fetch(API + '/api/reject-ride', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ rideId, platform })
-            });
-            const json = await res.json();
-
-            if (json.success) {
-                showToast('🚫 Corrida rejeitada');
-                const card = document.getElementById('ride-' + rideId);
-                if (card) {
-                    card.style.opacity   = '0';
-                    card.style.transform = 'scale(0.95) translateX(10px)';
-                    setTimeout(() => { if (card.parentNode) card.remove(); }, 300);
-                }
-                knownRideIds.delete(rideId);
-            } else {
-                showToast('❌ ' + (json.reason || 'Erro ao rejeitar'));
-            }
-        } catch (e) {
-            showToast('❌ Sem conexão com o servidor');
-        }
-    }
-
-    // ============================================
-    // FECHAR MODAL AO CLICAR FORA
-    // ============================================
-    document.getElementById('confirmModal').addEventListener('click', function (e) {
-        if (e.target === this) closeModal();
-    });
-
-    // ============================================
-    // INICIALIZAÇÃO
-    // ============================================
-    loadConfig();
-    fetchRides();
-
-    // Polling a cada 3 segundos
-    setInterval(fetchRides, 3000);
-
-</script>
-</body>
-</html>
