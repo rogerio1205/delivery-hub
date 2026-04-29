@@ -1,6 +1,5 @@
 // ============================================================
-// DeliveryHub — backend.js v2.1
-// Correção: aceita GET e POST, deduplicação, health-check
+// DeliveryHub — backend.js v2.2
 // ============================================================
 const express = require('express');
 const cors    = require('cors');
@@ -29,25 +28,20 @@ var activePlatforms = {
 };
 
 var pendingAcceptCommands = [];
-
-// Deduplicação: evita mesma notificação em 15 segundos
 var recentNotifKeys = {};
 
-// ── Mapa de packageName → plataforma ─────────────────────────
+// ── Mapa packageName → plataforma ────────────────────────────
 var PACKAGE_MAP = {
-    'br.com.brainweb.ifood':  'ifood',
-    'com.ubercab.eats':       'ubereats',
-    'com.keeta.courier':      'keeta',
-    'com.keeta.driver':       'keeta',
-    'br.com.loggi.android':   'loggi'
+    'br.com.brainweb.ifood': 'ifood',
+    'com.ubercab.eats':      'ubereats',
+    'com.keeta.courier':     'keeta',
+    'com.keeta.driver':      'keeta',
+    'br.com.loggi.android':  'loggi'
 };
 
 function detectPlatform(platform, packageName) {
-    // Tenta pelo campo platform primeiro
     if (platform && activePlatforms[platform]) return platform;
-    // Tenta pelo packageName exato
     if (packageName && PACKAGE_MAP[packageName]) return PACKAGE_MAP[packageName];
-    // Tenta por substring
     if (packageName) {
         var pkg = packageName.toLowerCase();
         if (pkg.indexOf('ifood')  >= 0) return 'ifood';
@@ -58,36 +52,34 @@ function detectPlatform(platform, packageName) {
     return null;
 }
 
-// ── Lógica de processar notificação (GET ou POST) ─────────────
+// ── Processar notificação ─────────────────────────────────────
 function processNotification(data, res) {
     var platform    = (data.platform    || '').toString().trim();
     var packageName = (data.packageName || '').toString().trim();
     var title       = (data.title       || '').toString().trim();
     var text        = (data.text        || '').toString().trim();
 
-    console.log('\n=== NOTIFICAÇÃO RECEBIDA ===');
+    console.log('\n=== NOTIFICACAO RECEBIDA ===');
     console.log('platform   :', platform);
     console.log('packageName:', packageName);
     console.log('title      :', title);
     console.log('text       :', text);
 
-    // Detectar plataforma
     var detectedPlatform = detectPlatform(platform, packageName);
     if (!detectedPlatform) {
-        console.log('[ERRO] Plataforma não identificada');
+        console.log('[ERRO] Plataforma nao identificada');
         return res.json({ success: false, reason: 'Plataforma nao detectada' });
     }
 
-    // Verifica se plataforma está habilitada
     if (!activePlatforms[detectedPlatform].enabled) {
         console.log('[SKIP] Plataforma desabilitada:', detectedPlatform);
         return res.json({ success: false, reason: 'Plataforma desabilitada' });
     }
 
-    // Deduplicação por conteúdo (janela de 15s)
+    // Deduplicacao (janela 15s)
     var dedupKey = detectedPlatform + '|' + title + '|' + text;
     if (recentNotifKeys[dedupKey]) {
-        console.log('[DEDUP] Notificação duplicada ignorada');
+        console.log('[DEDUP] Ignorada');
         return res.json({ success: false, reason: 'Duplicata ignorada' });
     }
     recentNotifKeys[dedupKey] = true;
@@ -95,30 +87,23 @@ function processNotification(data, res) {
 
     var fullText = title + ' ' + text;
 
-    // Extrair valor R$
     var moneyMatch = fullText.match(/R\$\s*(\d+[,.]?\d*)/i);
-    var earnings   = moneyMatch
-        ? parseFloat(moneyMatch[1].replace(',', '.'))
-        : null;
+    var earnings   = moneyMatch ? parseFloat(moneyMatch[1].replace(',', '.')) : null;
 
-    // Verificar ganho mínimo (só filtra se encontrou um valor)
     if (earnings !== null && earnings < (userPreferences.ganhoMinimo || 0)) {
-        console.log('[SKIP] R$' + earnings + ' < mínimo R$' + userPreferences.ganhoMinimo);
+        console.log('[SKIP] Abaixo do minimo');
         return res.json({ success: false, reason: 'Abaixo do ganho minimo' });
     }
 
-    // Extrair distância km
     var distMatch = fullText.match(/(\d+[,.]?\d*)\s*km/i);
     var distance  = distMatch
         ? parseFloat(distMatch[1].replace(',', '.'))
         : parseFloat((Math.random() * 3 + 0.5).toFixed(1));
 
-    // Destino — usa texto da notificação
     var destination = text.length > 0
         ? text.substring(0, 120)
         : (title.length > 0 ? title.substring(0, 120) : 'Verificar no app');
 
-    // Posição aproximada dentro do raio configurado
     var spread = (userPreferences.raioMaximo || 5) / 111 / 2;
     var lat = (userPreferences.latitude  || -23.6821) + (Math.random() - 0.5) * spread;
     var lng = (userPreferences.longitude || -46.5650) + (Math.random() - 0.5) * spread;
@@ -139,44 +124,37 @@ function processNotification(data, res) {
     };
 
     activePlatforms[detectedPlatform].rides.push(newRide);
-    console.log('[OK] Corrida adicionada:', detectedPlatform, 'R$' + newRide.earnings);
+    console.log('[OK] Adicionada:', detectedPlatform, 'R$' + newRide.earnings);
     res.json({ success: true, ride: newRide });
 }
 
 // ── Rotas ─────────────────────────────────────────────────────
-
-// Health-check — testa se o servidor está vivo
 app.get('/api/ping', function(req, res) {
-    res.json({ ok: true, ts: new Date().toISOString(), msg: 'DeliveryHub online' });
+    res.json({ ok: true, ts: new Date().toISOString() });
 });
 
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Config
 app.get('/api/config', function(req, res) {
     res.json(userPreferences);
 });
 
 app.post('/api/config', function(req, res) {
     userPreferences = Object.assign({}, userPreferences, req.body);
-    console.log('[CONFIG] Atualizada:', JSON.stringify(userPreferences));
+    console.log('[CONFIG]', JSON.stringify(userPreferences));
     res.json({ success: true });
 });
 
-// ── NOTIFICAÇÃO — aceita POST (body JSON) e GET (query params) ─
-// POST é o método correto — use na aba "Corpo da requisição" do MacroDroid
 app.post('/api/notification', function(req, res) {
     processNotification(req.body, res);
 });
 
-// GET — fallback caso o MacroDroid coloque params na URL
 app.get('/api/notification', function(req, res) {
     processNotification(req.query, res);
 });
 
-// ── Corridas pendentes ────────────────────────────────────────
 app.get('/api/rides', function(req, res) {
     var allRides = [];
     Object.keys(activePlatforms).forEach(function(platform) {
@@ -192,52 +170,38 @@ app.get('/api/rides', function(req, res) {
     res.json(allRides);
 });
 
-// ── Aceitar corrida ───────────────────────────────────────────
 app.post('/api/accept-ride', function(req, res) {
     var rideId   = req.body.rideId;
     var platform = req.body.platform;
     if (!activePlatforms[platform]) return res.json({ success: false });
-
-    var ride = activePlatforms[platform].rides.find(function(r) {
-        return r.id === rideId;
-    });
-    if (!ride) return res.json({ success: false, reason: 'Corrida nao encontrada' });
-
+    var ride = activePlatforms[platform].rides.find(function(r) { return r.id === rideId; });
+    if (!ride) return res.json({ success: false, reason: 'Nao encontrada' });
     ride.status = 'accepted';
     pendingAcceptCommands.push({
-        rideId:    rideId,
-        platform:  platform,
-        timestamp: new Date().toISOString(),
-        executed:  false
+        rideId: rideId, platform: platform,
+        timestamp: new Date().toISOString(), executed: false
     });
     console.log('[ACEITA]', rideId, platform);
     res.json({ success: true, isReal: ride.source === 'real' });
 });
 
-// ── Rejeitar corrida ──────────────────────────────────────────
 app.post('/api/reject-ride', function(req, res) {
     var rideId   = req.body.rideId;
     var platform = req.body.platform;
     if (!activePlatforms[platform]) return res.json({ success: false });
-
-    var ride = activePlatforms[platform].rides.find(function(r) {
-        return r.id === rideId;
-    });
-    if (!ride) return res.json({ success: false, reason: 'Corrida nao encontrada' });
-
+    var ride = activePlatforms[platform].rides.find(function(r) { return r.id === rideId; });
+    if (!ride) return res.json({ success: false, reason: 'Nao encontrada' });
     ride.status = 'rejected';
     console.log('[REJEITADA]', rideId);
     res.json({ success: true });
 });
 
-// ── Comandos pendentes para MacroDroid ───────────────────────
 app.get('/api/pending-commands', function(req, res) {
     var pending = pendingAcceptCommands.filter(function(c) { return !c.executed; });
     pending.forEach(function(c) { c.executed = true; });
     res.json(pending);
 });
 
-// ── Toggle plataforma ─────────────────────────────────────────
 app.post('/api/platform/:platform/toggle', function(req, res) {
     var p = req.params.platform;
     if (!activePlatforms[p]) return res.json({ success: false });
@@ -246,7 +210,6 @@ app.post('/api/platform/:platform/toggle', function(req, res) {
     res.json({ success: true, enabled: activePlatforms[p].enabled });
 });
 
-// ── Estatísticas ──────────────────────────────────────────────
 app.get('/api/stats', function(req, res) {
     var stats = {};
     Object.keys(activePlatforms).forEach(function(p) {
@@ -261,7 +224,6 @@ app.get('/api/stats', function(req, res) {
     res.json(stats);
 });
 
-// ── Limpeza a cada 5 minutos ──────────────────────────────────
 setInterval(function() {
     var cutoff = Date.now() - (5 * 60 * 1000);
     Object.keys(activePlatforms).forEach(function(p) {
@@ -273,7 +235,6 @@ setInterval(function() {
         var removed = before - activePlatforms[p].rides.length;
         if (removed > 0) console.log('[LIMPEZA]', p, removed, 'removidas');
     });
-
     var cmdCutoff = Date.now() - 30000;
     pendingAcceptCommands = pendingAcceptCommands.filter(function(c) {
         return new Date(c.timestamp).getTime() > cmdCutoff;
@@ -281,14 +242,7 @@ setInterval(function() {
     console.log('[LIMPEZA] OK:', new Date().toLocaleTimeString('pt-BR'));
 }, 300000);
 
-// ── Start ──────────────────────────────────────────────────────
 var PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', function() {
-    console.log('╔══════════════════════════════════════╗');
-    console.log('║   DeliveryHub v2.1 — ONLINE          ║');
-    console.log('║   Porta : ' + PORT + '                       ║');
-    console.log('║   POST /api/notification  (correto)  ║');
-    console.log('║   GET  /api/notification  (fallback) ║');
-    console.log('║   GET  /api/ping          (teste)    ║');
-    console.log('╚══════════════════════════════════════╝');
+    console.log('DeliveryHub v2.2 rodando na porta ' + PORT);
 });
