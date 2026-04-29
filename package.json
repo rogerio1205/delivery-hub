@@ -1,6 +1,6 @@
 {
   "name": "delivery-hub",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Monitor Multi-Plataforma para Entregadores",
   "main": "backend.js",
   "scripts": {
