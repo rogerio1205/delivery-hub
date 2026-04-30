@@ -1,265 +1,257 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(__dirname));
 
-var userPreferences = {
-    latitude: -23.6722,
-    longitude: -46.6072,
-    raioMaximo: 5,
-    ganhoMinimo: 5,
-    distanciaMaxima: 10
-};
-
-var activePlatforms = {
-    ifood:    { rides: [], enabled: true },
-    ubereats: { rides: [], enabled: true },
-    keeta:    { rides: [], enabled: true },
-    loggi:    { rides: [], enabled: true }
-};
-
-var pendingAcceptCommands = [];
-
-app.get('/', function(req, res) {
-    res.sendFile(path.join(__dirname, 'index.html'));
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
 });
 
-app.get('/api/config', function(req, res) {
-    res.json(userPreferences);
+let userPreferences = {};
+let activePlatforms = {
+    ifood: { rides: [], enabled: true },
+    uber: { rides: [], enabled: true },
+    keeta: { rides: [], enabled: true },
+    loggi: { rides: [], enabled: true }
+};
+
+let acceptedRides = [];
+
+// ============================================
+// WEBHOOK DO IFOOD - Receber ofertas reais
+// ============================================
+app.post('/webhook/ifood', (req, res) => {
+    const { orderId, restaurantName, deliveryAddress, distance, value, items } = req.body;
+
+    const newRide = {
+        id: `ifood-${orderId}`,
+        platform: 'ifood',
+        lat: -23.5505 + (Math.random() - 0.5) * 0.1,
+        lng: -46.6333 + (Math.random() - 0.5) * 0.1,
+        distance: distance || Math.random() * 10 + 0.5,
+        earnings: value || Math.random() * 40 + 12,
+        destination: deliveryAddress || restaurantName || 'Endereço',
+        timestamp: new Date(),
+        status: 'pending',
+        color: '#ea1d2c',
+        orderId: orderId,
+        items: items
+    };
+
+    activePlatforms.ifood.rides.push(newRide);
+    console.log(`🍔 Nova oferta iFood recebida: ${orderId}`);
+
+    res.json({ success: true, message: 'Oferta recebida' });
 });
 
-app.post('/api/config', function(req, res) {
-    userPreferences = Object.assign({}, userPreferences, req.body);
-    console.log('Config atualizada');
+// ============================================
+// WEBHOOK DO KEETA - Receber ofertas reais
+// ============================================
+app.post('/webhook/keeta', (req, res) => {
+    const { jobId, pickupAddress, deliveryAddress, distance, value } = req.body;
+
+    const newRide = {
+        id: `keeta-${jobId}`,
+        platform: 'keeta',
+        lat: -23.5505 + (Math.random() - 0.5) * 0.1,
+        lng: -46.6333 + (Math.random() - 0.5) * 0.1,
+        distance: distance || Math.random() * 10 + 0.5,
+        earnings: value || Math.random() * 40 + 12,
+        destination: deliveryAddress || pickupAddress || 'Endereço',
+        timestamp: new Date(),
+        status: 'pending',
+        color: '#00d4ff',
+        jobId: jobId
+    };
+
+    activePlatforms.keeta.rides.push(newRide);
+    console.log(`📦 Nova oferta Keeta recebida: ${jobId}`);
+
+    res.json({ success: true, message: 'Oferta recebida' });
+});
+
+// ============================================
+// WEBHOOK DO UBER EATS
+// ============================================
+app.post('/webhook/uber', (req, res) => {
+    const { orderId, pickupAddress, deliveryAddress, distance, value } = req.body;
+
+    const newRide = {
+        id: `uber-${orderId}`,
+        platform: 'uber',
+        lat: -23.5505 + (Math.random() - 0.5) * 0.1,
+        lng: -46.6333 + (Math.random() - 0.5) * 0.1,
+        distance: distance || Math.random() * 10 + 0.5,
+        earnings: value || Math.random() * 40 + 12,
+        destination: deliveryAddress || pickupAddress || 'Endereço',
+        timestamp: new Date(),
+        status: 'pending',
+        color: '#000000',
+        orderId: orderId
+    };
+
+    activePlatforms.uber.rides.push(newRide);
+    console.log(`🚗 Nova oferta Uber recebida: ${orderId}`);
+
+    res.json({ success: true, message: 'Oferta recebida' });
+});
+
+// ============================================
+// WEBHOOK DO LOGGI
+// ============================================
+app.post('/webhook/loggi', (req, res) => {
+    const { jobId, pickupAddress, deliveryAddress, distance, value } = req.body;
+
+    const newRide = {
+        id: `loggi-${jobId}`,
+        platform: 'loggi',
+        lat: -23.5505 + (Math.random() - 0.5) * 0.1,
+        lng: -46.6333 + (Math.random() - 0.5) * 0.1,
+        distance: distance || Math.random() * 10 + 0.5,
+        earnings: value || Math.random() * 40 + 12,
+        destination: deliveryAddress || pickupAddress || 'Endereço',
+        timestamp: new Date(),
+        status: 'pending',
+        color: '#ff6b00',
+        jobId: jobId
+    };
+
+    activePlatforms.loggi.rides.push(newRide);
+    console.log(`📍 Nova oferta Loggi recebida: ${jobId}`);
+
+    res.json({ success: true, message: 'Oferta recebida' });
+});
+
+// ============================================
+// ENDPOINTS EXISTENTES
+// ============================================
+
+app.post('/api/preferences', (req, res) => {
+    userPreferences = req.body;
+    console.log('✅ Preferências atualizadas:', userPreferences);
     res.json({ success: true });
 });
 
-app.post('/api/notification', function(req, res) {
-    var platform    = req.body.platform;
-    var title       = req.body.title;
-    var text        = req.body.text;
-    var packageName = req.body.packageName;
-    var earnings    = req.body.earnings;
-    var distance    = req.body.distance;
-    var origin      = req.body.origin;
-    var destination = req.body.destination;
-    var timer       = req.body.timer;
-
-    console.log('=== NOTIFICACAO RECEBIDA ===');
-    console.log('Package: ' + (packageName || platform || 'vazio'));
-    console.log('Titulo: ' + (title || 'vazio'));
-    console.log('Texto: ' + (text || 'vazio'));
-
-    var packageMap = {
-        'br.com.brainweb.ifood': 'ifood',
-        'com.ubercab.eats':      'ubereats',
-        'com.keeta.courier':     'keeta',
-        'com.keeta.driver':      'keeta',
-        'br.com.loggi.android':  'loggi'
-    };
-
-    var detectedPlatform = platform;
-    if (!detectedPlatform && packageName) {
-        detectedPlatform = packageMap[packageName];
-        if (!detectedPlatform) {
-            var pkg = packageName.toLowerCase();
-            if (pkg.indexOf('ifood') >= 0)      detectedPlatform = 'ifood';
-            else if (pkg.indexOf('uber') >= 0)  detectedPlatform = 'ubereats';
-            else if (pkg.indexOf('keeta') >= 0) detectedPlatform = 'keeta';
-            else if (pkg.indexOf('loggi') >= 0) detectedPlatform = 'loggi';
-            else {
-                console.log('App ignorado: ' + packageName);
-                return res.json({ success: false, reason: 'App nao e delivery' });
-            }
+app.get('/api/rides', (req, res) => {
+    const allRides = [];
+    Object.keys(activePlatforms).forEach(platform => {
+        if (activePlatforms[platform].enabled) {
+            activePlatforms[platform].rides.forEach(ride => {
+                allRides.push({ ...ride, platform });
+            });
         }
-    }
-
-    if (!detectedPlatform) {
-        return res.json({ success: false, reason: 'Plataforma nao detectada' });
-    }
-
-    var fullText = (title || '') + ' ' + (text || '');
-
-    // Usar earnings enviado direto OU extrair do texto
-    var finalEarnings = earnings
-        ? parseFloat(earnings)
-        : null;
-    if (!finalEarnings) {
-        var moneyMatch = fullText.match(/R\$\s*(\d+[,.]?\d*)/i);
-        finalEarnings = moneyMatch ? parseFloat(moneyMatch[1].replace(',', '.')) : null;
-    }
-
-    // Usar distance enviado direto OU extrair do texto
-    var finalDistance = distance
-        ? parseFloat(distance)
-        : null;
-    if (!finalDistance) {
-        var distMatch = fullText.match(/(\d+[,.]?\d*)\s*km/i);
-        finalDistance = distMatch ? parseFloat(distMatch[1].replace(',', '.')) : 2.0;
-    }
-
-    // Verificar ganho minimo
-    if (finalEarnings !== null && finalEarnings < (userPreferences.ganhoMinimo || 0)) {
-        console.log('Ignorado: R$' + finalEarnings + ' < minimo R$' + userPreferences.ganhoMinimo);
-        return res.json({ success: false, reason: 'Abaixo do ganho minimo' });
-    }
-
-    // Destino
-    var finalDestination = destination || 'Verificar no app';
-    if (!destination) {
-        if (text && text.length > 0)        finalDestination = text.substring(0, 150).trim();
-        else if (title && title.length > 0) finalDestination = title.substring(0, 150).trim();
-    }
-
-    var spread = (userPreferences.raioMaximo || 5) / 111 / 2;
-    var lat    = (userPreferences.latitude  || -23.6722) + (Math.random() - 0.5) * spread;
-    var lng    = (userPreferences.longitude || -46.6072) + (Math.random() - 0.5) * spread;
-
-    var newRide = {
-        id:          detectedPlatform + '-' + Date.now(),
-        platform:    detectedPlatform,
-        lat:         lat,
-        lng:         lng,
-        distance:    parseFloat(finalDistance).toFixed(1),
-        earnings:    (finalEarnings !== null ? finalEarnings : 0).toFixed(2),
-        origin:      origin || '',
-        destination: finalDestination,
-        timer:       timer || 0,
-        timestamp:   new Date(),
-        status:      'pending',
-        source:      'real',
-        rawTitle:    title,
-        rawText:     text
-    };
-
-    if (activePlatforms[detectedPlatform]) {
-        activePlatforms[detectedPlatform].rides.push(newRide);
-        console.log('CORRIDA REAL: ' + detectedPlatform + ' R$' + newRide.earnings + ' ' + finalDistance + 'km');
-        res.json({ success: true, ride: newRide });
-    } else {
-        res.json({ success: false, reason: 'Plataforma desabilitada' });
-    }
-});
-
-app.get('/api/rides', function(req, res) {
-    var allRides = [];
-    Object.keys(activePlatforms).forEach(function(platform) {
-        if (!activePlatforms[platform].enabled) return;
-        activePlatforms[platform].rides.forEach(function(ride) {
-            if (ride.status !== 'pending') return;
-            var r = Object.assign({}, ride);
-            r.platform = platform;
-            allRides.push(r);
-        });
     });
-    allRides.sort(function(a, b) {
-        return parseFloat(b.earnings) - parseFloat(a.earnings);
-    });
-    console.log('GET /api/rides: ' + allRides.length + ' corridas');
     res.json(allRides);
 });
 
-app.post('/api/accept-ride', function(req, res) {
-    var rideId   = req.body.rideId;
-    var platform = req.body.platform;
-    if (!activePlatforms[platform]) return res.json({ success: false });
-    var ride = null;
-    for (var i = 0; i < activePlatforms[platform].rides.length; i++) {
-        if (activePlatforms[platform].rides[i].id === rideId) {
-            ride = activePlatforms[platform].rides[i];
-            break;
-        }
-    }
+app.post('/api/accept-ride', (req, res) => {
+    const { rideId, platform } = req.body;
+    const ride = activePlatforms[platform].rides.find(r => r.id === rideId);
+
     if (ride) {
         ride.status = 'accepted';
-        pendingAcceptCommands.push({
-            rideId: rideId,
-            platform: platform,
-            timestamp: new Date(),
-            executed: false
-        });
-        console.log('Aceita: ' + rideId);
-        res.json({ success: true, isReal: true });
+        acceptedRides.push({ ...ride, platform, acceptedAt: new Date() });
+        console.log(`✅ Corrida ${rideId} aceita em ${platform}!`);
+        res.json({ success: true, message: `Corrida aceita!` });
     } else {
-        res.json({ success: false });
+        res.json({ success: false, message: 'Corrida não encontrada' });
     }
 });
 
-app.post('/api/reject-ride', function(req, res) {
-    var rideId   = req.body.rideId;
-    var platform = req.body.platform;
-    if (!activePlatforms[platform]) return res.json({ success: false });
-    var ride = null;
-    for (var i = 0; i < activePlatforms[platform].rides.length; i++) {
-        if (activePlatforms[platform].rides[i].id === rideId) {
-            ride = activePlatforms[platform].rides[i];
-            break;
-        }
-    }
+app.post('/api/reject-ride', (req, res) => {
+    const { rideId, platform } = req.body;
+    const ride = activePlatforms[platform].rides.find(r => r.id === rideId);
+
     if (ride) {
         ride.status = 'rejected';
-        console.log('Rejeitada: ' + rideId);
+        console.log(`❌ Corrida ${rideId} rejeitada em ${platform}`);
         res.json({ success: true });
     } else {
         res.json({ success: false });
     }
 });
 
-app.get('/api/pending-commands', function(req, res) {
-    var pending = pendingAcceptCommands.filter(function(c) { return !c.executed; });
-    pending.forEach(function(c) { c.executed = true; });
-    res.json(pending);
-});
-
-app.post('/api/platform/:platform/toggle', function(req, res) {
-    var platform = req.params.platform;
+app.post('/api/platform/:platform/toggle', (req, res) => {
+    const { platform } = req.params;
     if (activePlatforms[platform]) {
         activePlatforms[platform].enabled = !activePlatforms[platform].enabled;
-        console.log(platform + ': ' + (activePlatforms[platform].enabled ? 'ON' : 'OFF'));
         res.json({ success: true, enabled: activePlatforms[platform].enabled });
     } else {
         res.json({ success: false });
     }
 });
 
-app.get('/api/stats', function(req, res) {
-    var stats = {};
-    Object.keys(activePlatforms).forEach(function(platform) {
-        var rides = activePlatforms[platform].rides;
-        var p=0,a=0,r=0;
-        for (var i=0;i<rides.length;i++){
-            if(rides[i].status==='pending')  p++;
-            if(rides[i].status==='accepted') a++;
-            if(rides[i].status==='rejected') r++;
-        }
-        stats[platform]={total:rides.length,pending:p,accepted:a,rejected:r};
+app.get('/api/stats', (req, res) => {
+    const stats = {};
+    Object.keys(activePlatforms).forEach(platform => {
+        const rides = activePlatforms[platform].rides;
+        stats[platform] = {
+            total: rides.length,
+            accepted: rides.filter(r => r.status === 'accepted').length,
+            pending: rides.filter(r => r.status === 'pending').length,
+            rejected: rides.filter(r => r.status === 'rejected').length
+        };
     });
     res.json(stats);
 });
 
-setInterval(function() {
-    var cutoff = Date.now() - (10 * 60 * 1000);
-    Object.keys(activePlatforms).forEach(function(platform) {
-        activePlatforms[platform].rides = activePlatforms[platform].rides.filter(function(r) {
-            return r.status === 'pending' || new Date(r.timestamp).getTime() > cutoff;
-        });
-    });
-    pendingAcceptCommands = pendingAcceptCommands.filter(function(c) {
-        return new Date(c.timestamp).getTime() > (Date.now() - 30000);
-    });
-    console.log('Limpeza: ' + new Date().toLocaleTimeString('pt-BR'));
-}, 600000);
+// ============================================
+// GERAR CORRIDAS SIMULADAS (para testes)
+// ============================================
+const platformConfigs = {
+    ifood: { color: '#ea1d2c', destinations: ['Av. Paulista', 'Rua Augusta', 'Consolação', 'Vila Mariana', 'Bela Vista', 'Pinheiros'] },
+    uber: { color: '#000000', destinations: ['Bela Vista', 'Pinheiros', 'Higienópolis', 'Cerqueira César', 'Itaim', 'Brooklin'] },
+    keeta: { color: '#00d4ff', destinations: ['Jardins', 'Tatuapé', 'Aricanduva', 'Mooca', 'Vila Olímpia', 'Saúde'] },
+    loggi: { color: '#ff6b00', destinations: ['Itaim', 'Brooklin', 'Vila Olímpia', 'Saúde', 'Consolação', 'Higienópolis'] }
+};
 
-var PORT = process.env.PORT || 3000;
-app.listen(PORT, function() {
-    console.log('=====================================');
-    console.log('DeliveryHub porta: ' + PORT);
-    console.log('MODO: SOMENTE CORRIDAS REAIS');
-    console.log('SEM SIMULADOR');
-    console.log('POST /api/notification ATIVO');
-    console.log('=====================================');
+// Gerar corridas simuladas a cada 6 segundos (apenas para testes)
+setInterval(() => {
+    const centerLat = userPreferences.latitude || -23.5505;
+    const centerLng = userPreferences.longitude || -46.6333;
+
+    Object.keys(activePlatforms).forEach(platform => {
+        if (!activePlatforms[platform].enabled) return;
+
+        const numRides = Math.random() > 0.7 ? 1 : 0;
+
+        for (let i = 0; i < numRides; i++) {
+            const randomOffset = (Math.random() - 0.5) * 0.15;
+            const config = platformConfigs[platform];
+
+            const newRide = {
+                id: `${platform}-sim-${Date.now()}-${i}`,
+                platform: platform,
+                lat: centerLat + randomOffset,
+                lng: centerLng + randomOffset,
+                distance: Math.random() * 10 + 0.5,
+                earnings: Math.random() * 40 + 12,
+                destination: config.destinations[Math.floor(Math.random() * config.destinations.length)],
+                timestamp: new Date(),
+                status: 'pending',
+                color: config.color
+            };
+
+            activePlatforms[platform].rides.push(newRide);
+        }
+
+        if (activePlatforms[platform].rides.length > 50) {
+            activePlatforms[platform].rides = activePlatforms[platform].rides.slice(-50);
+        }
+    });
+}, 6000);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+    console.log('📱 Monitorando: iFood, Uber Eats, Keeta, Loggi');
+    console.log('');
+    console.log('🔗 Webhooks disponíveis:');
+    console.log(`   POST http://localhost:${PORT}/webhook/ifood`);
+    console.log(`   POST http://localhost:${PORT}/webhook/keeta`);
+    console.log(`   POST http://localhost:${PORT}/webhook/uber`);
+    console.log(`   POST http://localhost:${PORT}/webhook/loggi`);
 });
