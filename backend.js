@@ -21,13 +21,14 @@ let activePlatforms = {
 let acceptedRides = [];
 
 // ============================================
-// WEBHOOK DO IFOOD - Receber ofertas reais
+// WEBHOOKS - Receber ofertas reais das plataformas
 // ============================================
+
 app.post('/webhook/ifood', (req, res) => {
-    const { orderId, restaurantName, deliveryAddress, distance, value, items } = req.body;
+    const { orderId, restaurantName, deliveryAddress, distance, value } = req.body;
 
     const newRide = {
-        id: `ifood-${orderId}`,
+        id: `ifood-${orderId}-${Date.now()}`,
         platform: 'ifood',
         lat: -23.5505 + (Math.random() - 0.5) * 0.1,
         lng: -46.6333 + (Math.random() - 0.5) * 0.1,
@@ -37,24 +38,20 @@ app.post('/webhook/ifood', (req, res) => {
         timestamp: new Date(),
         status: 'pending',
         color: '#ea1d2c',
-        orderId: orderId,
-        items: items
+        orderId: orderId
     };
 
     activePlatforms.ifood.rides.push(newRide);
-    console.log(`🍔 Nova oferta iFood recebida: ${orderId}`);
+    console.log(`🍔 IFOOD: Nova oferta recebida! ID: ${orderId}`);
 
-    res.json({ success: true, message: 'Oferta recebida' });
+    res.json({ success: true, message: 'Oferta iFood recebida' });
 });
 
-// ============================================
-// WEBHOOK DO KEETA - Receber ofertas reais
-// ============================================
 app.post('/webhook/keeta', (req, res) => {
     const { jobId, pickupAddress, deliveryAddress, distance, value } = req.body;
 
     const newRide = {
-        id: `keeta-${jobId}`,
+        id: `keeta-${jobId}-${Date.now()}`,
         platform: 'keeta',
         lat: -23.5505 + (Math.random() - 0.5) * 0.1,
         lng: -46.6333 + (Math.random() - 0.5) * 0.1,
@@ -68,19 +65,16 @@ app.post('/webhook/keeta', (req, res) => {
     };
 
     activePlatforms.keeta.rides.push(newRide);
-    console.log(`📦 Nova oferta Keeta recebida: ${jobId}`);
+    console.log(`📦 KEETA: Nova oferta recebida! ID: ${jobId}`);
 
-    res.json({ success: true, message: 'Oferta recebida' });
+    res.json({ success: true, message: 'Oferta Keeta recebida' });
 });
 
-// ============================================
-// WEBHOOK DO UBER EATS
-// ============================================
 app.post('/webhook/uber', (req, res) => {
     const { orderId, pickupAddress, deliveryAddress, distance, value } = req.body;
 
     const newRide = {
-        id: `uber-${orderId}`,
+        id: `uber-${orderId}-${Date.now()}`,
         platform: 'uber',
         lat: -23.5505 + (Math.random() - 0.5) * 0.1,
         lng: -46.6333 + (Math.random() - 0.5) * 0.1,
@@ -94,19 +88,16 @@ app.post('/webhook/uber', (req, res) => {
     };
 
     activePlatforms.uber.rides.push(newRide);
-    console.log(`🚗 Nova oferta Uber recebida: ${orderId}`);
+    console.log(`🚗 UBER: Nova oferta recebida! ID: ${orderId}`);
 
-    res.json({ success: true, message: 'Oferta recebida' });
+    res.json({ success: true, message: 'Oferta Uber recebida' });
 });
 
-// ============================================
-// WEBHOOK DO LOGGI
-// ============================================
 app.post('/webhook/loggi', (req, res) => {
     const { jobId, pickupAddress, deliveryAddress, distance, value } = req.body;
 
     const newRide = {
-        id: `loggi-${jobId}`,
+        id: `loggi-${jobId}-${Date.now()}`,
         platform: 'loggi',
         lat: -23.5505 + (Math.random() - 0.5) * 0.1,
         lng: -46.6333 + (Math.random() - 0.5) * 0.1,
@@ -120,9 +111,9 @@ app.post('/webhook/loggi', (req, res) => {
     };
 
     activePlatforms.loggi.rides.push(newRide);
-    console.log(`📍 Nova oferta Loggi recebida: ${jobId}`);
+    console.log(`📍 LOGGI: Nova oferta recebida! ID: ${jobId}`);
 
-    res.json({ success: true, message: 'Oferta recebida' });
+    res.json({ success: true, message: 'Oferta Loggi recebida' });
 });
 
 // ============================================
@@ -155,7 +146,7 @@ app.post('/api/accept-ride', (req, res) => {
         ride.status = 'accepted';
         acceptedRides.push({ ...ride, platform, acceptedAt: new Date() });
         console.log(`✅ Corrida ${rideId} aceita em ${platform}!`);
-        res.json({ success: true, message: `Corrida aceita!` });
+        res.json({ success: true, message: `Corrida aceita em ${platform}!` });
     } else {
         res.json({ success: false, message: 'Corrida não encontrada' });
     }
@@ -208,7 +199,6 @@ const platformConfigs = {
     loggi: { color: '#ff6b00', destinations: ['Itaim', 'Brooklin', 'Vila Olímpia', 'Saúde', 'Consolação', 'Higienópolis'] }
 };
 
-// Gerar corridas simuladas a cada 6 segundos (apenas para testes)
 setInterval(() => {
     const centerLat = userPreferences.latitude || -23.5505;
     const centerLng = userPreferences.longitude || -46.6333;
@@ -216,14 +206,14 @@ setInterval(() => {
     Object.keys(activePlatforms).forEach(platform => {
         if (!activePlatforms[platform].enabled) return;
 
-        const numRides = Math.random() > 0.7 ? 1 : 0;
+        const numRides = Math.random() > 0.6 ? 2 : 1;
 
         for (let i = 0; i < numRides; i++) {
             const randomOffset = (Math.random() - 0.5) * 0.15;
             const config = platformConfigs[platform];
 
             const newRide = {
-                id: `${platform}-sim-${Date.now()}-${i}`,
+                id: `${platform}-${Date.now()}-${i}`,
                 platform: platform,
                 lat: centerLat + randomOffset,
                 lng: centerLng + randomOffset,
@@ -238,11 +228,11 @@ setInterval(() => {
             activePlatforms[platform].rides.push(newRide);
         }
 
-        if (activePlatforms[platform].rides.length > 50) {
-            activePlatforms[platform].rides = activePlatforms[platform].rides.slice(-50);
+        if (activePlatforms[platform].rides.length > 30) {
+            activePlatforms[platform].rides = activePlatforms[platform].rides.slice(-30);
         }
     });
-}, 6000);
+}, 4000);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
@@ -254,4 +244,6 @@ app.listen(PORT, () => {
     console.log(`   POST http://localhost:${PORT}/webhook/keeta`);
     console.log(`   POST http://localhost:${PORT}/webhook/uber`);
     console.log(`   POST http://localhost:${PORT}/webhook/loggi`);
+    console.log('');
+    console.log('⏳ Aguardando conexão do app e ofertas das plataformas...');
 });
