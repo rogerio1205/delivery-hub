@@ -1,32 +1,18 @@
-// ============================================================
-// DeliveryHub — backend.js v3.0
-// Exibe oferta DENTRO do DeliveryHub com timer real
-// ============================================================
 const express = require('express');
-const cors    = require('cors');
-const path    = require('path');
-const app     = express();
+const cors = require('cors');
+const path = require('path');
+const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
-// ── Tempo de expiração por plataforma (segundos) ─────────────
-var EXPIRY = {
-    ifood:    40,
-    keeta:    40,
-    ubereats: 30,
-    loggi:    30
-};
-
-// ── Estado ───────────────────────────────────────────────────
 var userPreferences = {
-    latitude:         -23.6721,
-    longitude:        -46.6077,
-    raioMaximo:       5,
-    ganhoMinimo:      10,
-    distanciaMaxima:  10
+    latitude: -23.6722,
+    longitude: -46.6072,
+    raioMaximo: 5,
+    ganhoMinimo: 5,
+    distanciaMaxima: 10
 };
 
 var activePlatforms = {
@@ -37,163 +23,6 @@ var activePlatforms = {
 };
 
 var pendingAcceptCommands = [];
-var recentNotifKeys = {};
-
-// ── packageName → plataforma ──────────────────────────────────
-var PACKAGE_MAP = {
-    'br.com.brainweb.ifood': 'ifood',
-    'com.ubercab.eats':      'ubereats',
-    'com.keeta.courier':     'keeta',
-    'com.keeta.driver':      'keeta',
-    'br.com.loggi.android':  'loggi'
-};
-
-var PACKAGE_NAME = {
-    'ifood':    'br.com.brainweb.ifood',
-    'ubereats': 'com.ubercab.eats',
-    'keeta':    'com.keeta.courier',
-    'loggi':    'br.com.loggi.android'
-};
-
-function detectPlatform(platform, packageName) {
-    if (platform && activePlatforms[platform]) return platform;
-    if (packageName && PACKAGE_MAP[packageName]) return PACKAGE_MAP[packageName];
-    if (packageName) {
-        var pkg = packageName.toLowerCase();
-        if (pkg.indexOf('ifood')  >= 0) return 'ifood';
-        if (pkg.indexOf('uber')   >= 0) return 'ubereats';
-        if (pkg.indexOf('keeta')  >= 0) return 'keeta';
-        if (pkg.indexOf('loggi')  >= 0) return 'loggi';
-    }
-    return null;
-}
-
-// ── Extrai dados da notificação ───────────────────────────────
-function extractRideData(fullText) {
-    // Valor R$
-    var moneyMatch = fullText.match(/R\$\s*(\d+[,.]?\d*)/i);
-    var earnings   = moneyMatch ? parseFloat(moneyMatch[1].replace(',', '.')) : null;
-
-    // Distância km
-    var distMatch = fullText.match(/(\d+[,.]?\d*)\s*km/i);
-    var distance  = distMatch
-        ? parseFloat(distMatch[1].replace(',', '.'))
-        : parseFloat((Math.random() * 3 + 1).toFixed(1));
-
-    // Timer (ex: "Pegar(40s)" ou "40s")
-    var timerMatch = fullText.match(/(\d+)\s*s\b/i);
-    var timerSecs  = timerMatch ? parseInt(timerMatch[1]) : null;
-
-    // Endereço restaurante (linha que contém número de rua)
-    var lines = fullText.split(/[\n|•·,]/);
-    var origem  = '';
-    var destino = '';
-    lines.forEach(function(line) {
-        line = line.trim();
-        if (!line) return;
-        if (/rua|av\.|avenida|alameda|estrada/i.test(line) && !origem) {
-            origem = line;
-        } else if (/rua|av\.|avenida|alameda|estrada/i.test(line) && !destino) {
-            destino = line;
-        }
-    });
-
-    return {
-        earnings:  earnings,
-        distance:  distance,
-        timerSecs: timerSecs,
-        origem:    origem,
-        destino:   destino
-    };
-}
-
-// ── Processar notificação ─────────────────────────────────────
-function processNotification(data, res) {
-    var platform    = (data.platform    || '').toString().trim();
-    var packageName = (data.packageName || '').toString().trim();
-    var title       = (data.title       || '').toString().trim();
-    var text        = (data.text        || '').toString().trim();
-
-    console.log('\n=== NOTIFICACAO RECEBIDA ===');
-    console.log('platform   :', platform);
-    console.log('packageName:', packageName);
-    console.log('title      :', title);
-    console.log('text       :', text);
-
-    var det = detectPlatform(platform, packageName);
-    if (!det) {
-        console.log('[ERRO] Plataforma nao identificada');
-        return res.json({ success: false, reason: 'Plataforma nao detectada' });
-    }
-
-    if (!activePlatforms[det].enabled) {
-        console.log('[SKIP] Desabilitada:', det);
-        return res.json({ success: false, reason: 'Plataforma desabilitada' });
-    }
-
-    // Deduplicação 15s
-    var key = det + '|' + title + '|' + text;
-    if (recentNotifKeys[key]) {
-        console.log('[DEDUP] Ignorada');
-        return res.json({ success: false, reason: 'Duplicata' });
-    }
-    recentNotifKeys[key] = true;
-    setTimeout(function() { delete recentNotifKeys[key]; }, 15000);
-
-    var fullText = title + '\n' + text;
-    var ext      = extractRideData(fullText);
-
-    // Verifica mínimo
-    if (ext.earnings !== null && ext.earnings < (userPreferences.ganhoMinimo || 0)) {
-        console.log('[SKIP] R$' + ext.earnings + ' < minimo');
-        return res.json({ success: false, reason: 'Abaixo do minimo' });
-    }
-
-    // Timer: usa o do app, senão padrão da plataforma
-    var expirySecs = ext.timerSecs || EXPIRY[det] || 40;
-    var expiresAt  = new Date(Date.now() + expirySecs * 1000).toISOString();
-
-    // Destino para exibição
-    var destination = ext.destino || ext.origem ||
-        (text.length > 0 ? text.substring(0, 120) : title.substring(0, 120)) ||
-        'Verificar no app';
-
-    // Origem (restaurante)
-    var origem = ext.origem || 'Restaurante — verificar no app';
-
-    // Posição aproximada
-    var spread = (userPreferences.raioMaximo || 5) / 111 / 2;
-    var lat = (userPreferences.latitude  || -23.6721) + (Math.random() - 0.5) * spread;
-    var lng = (userPreferences.longitude || -46.6077) + (Math.random() - 0.5) * spread;
-
-    var newRide = {
-        id:          det + '-real-' + Date.now(),
-        platform:    det,
-        packageName: PACKAGE_NAME[det] || '',
-        lat:         parseFloat(lat.toFixed(6)),
-        lng:         parseFloat(lng.toFixed(6)),
-        distance:    parseFloat(ext.distance).toFixed(1),
-        earnings:    (ext.earnings !== null ? ext.earnings : 0).toFixed(2),
-        origem:      origem,
-        destination: destination,
-        timestamp:   new Date().toISOString(),
-        expiresAt:   expiresAt,
-        expirySecs:  expirySecs,
-        status:      'pending',
-        source:      'real',
-        rawTitle:    title,
-        rawText:     text
-    };
-
-    activePlatforms[det].rides.push(newRide);
-    console.log('[OK]', det, 'R$' + newRide.earnings, '| timer:', expirySecs + 's');
-    res.json({ success: true, ride: newRide });
-}
-
-// ── Rotas ─────────────────────────────────────────────────────
-app.get('/api/ping', function(req, res) {
-    res.json({ ok: true, ts: new Date().toISOString() });
-});
 
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -205,82 +34,181 @@ app.get('/api/config', function(req, res) {
 
 app.post('/api/config', function(req, res) {
     userPreferences = Object.assign({}, userPreferences, req.body);
-    console.log('[CONFIG]', JSON.stringify(userPreferences));
+    console.log('Config atualizada');
     res.json({ success: true });
 });
 
 app.post('/api/notification', function(req, res) {
-    processNotification(req.body, res);
-});
-app.get('/api/notification', function(req, res) {
-    processNotification(req.query, res);
+    var platform    = req.body.platform;
+    var title       = req.body.title;
+    var text        = req.body.text;
+    var packageName = req.body.packageName;
+    var earnings    = req.body.earnings;
+    var distance    = req.body.distance;
+    var origin      = req.body.origin;
+    var destination = req.body.destination;
+    var timer       = req.body.timer;
+
+    console.log('=== NOTIFICACAO RECEBIDA ===');
+    console.log('Package: ' + (packageName || platform || 'vazio'));
+    console.log('Titulo: ' + (title || 'vazio'));
+    console.log('Texto: ' + (text || 'vazio'));
+
+    var packageMap = {
+        'br.com.brainweb.ifood': 'ifood',
+        'com.ubercab.eats':      'ubereats',
+        'com.keeta.courier':     'keeta',
+        'com.keeta.driver':      'keeta',
+        'br.com.loggi.android':  'loggi'
+    };
+
+    var detectedPlatform = platform;
+    if (!detectedPlatform && packageName) {
+        detectedPlatform = packageMap[packageName];
+        if (!detectedPlatform) {
+            var pkg = packageName.toLowerCase();
+            if (pkg.indexOf('ifood') >= 0)      detectedPlatform = 'ifood';
+            else if (pkg.indexOf('uber') >= 0)  detectedPlatform = 'ubereats';
+            else if (pkg.indexOf('keeta') >= 0) detectedPlatform = 'keeta';
+            else if (pkg.indexOf('loggi') >= 0) detectedPlatform = 'loggi';
+            else {
+                console.log('App ignorado: ' + packageName);
+                return res.json({ success: false, reason: 'App nao e delivery' });
+            }
+        }
+    }
+
+    if (!detectedPlatform) {
+        return res.json({ success: false, reason: 'Plataforma nao detectada' });
+    }
+
+    var fullText = (title || '') + ' ' + (text || '');
+
+    // Usar earnings enviado direto OU extrair do texto
+    var finalEarnings = earnings
+        ? parseFloat(earnings)
+        : null;
+    if (!finalEarnings) {
+        var moneyMatch = fullText.match(/R\$\s*(\d+[,.]?\d*)/i);
+        finalEarnings = moneyMatch ? parseFloat(moneyMatch[1].replace(',', '.')) : null;
+    }
+
+    // Usar distance enviado direto OU extrair do texto
+    var finalDistance = distance
+        ? parseFloat(distance)
+        : null;
+    if (!finalDistance) {
+        var distMatch = fullText.match(/(\d+[,.]?\d*)\s*km/i);
+        finalDistance = distMatch ? parseFloat(distMatch[1].replace(',', '.')) : 2.0;
+    }
+
+    // Verificar ganho minimo
+    if (finalEarnings !== null && finalEarnings < (userPreferences.ganhoMinimo || 0)) {
+        console.log('Ignorado: R$' + finalEarnings + ' < minimo R$' + userPreferences.ganhoMinimo);
+        return res.json({ success: false, reason: 'Abaixo do ganho minimo' });
+    }
+
+    // Destino
+    var finalDestination = destination || 'Verificar no app';
+    if (!destination) {
+        if (text && text.length > 0)        finalDestination = text.substring(0, 150).trim();
+        else if (title && title.length > 0) finalDestination = title.substring(0, 150).trim();
+    }
+
+    var spread = (userPreferences.raioMaximo || 5) / 111 / 2;
+    var lat    = (userPreferences.latitude  || -23.6722) + (Math.random() - 0.5) * spread;
+    var lng    = (userPreferences.longitude || -46.6072) + (Math.random() - 0.5) * spread;
+
+    var newRide = {
+        id:          detectedPlatform + '-' + Date.now(),
+        platform:    detectedPlatform,
+        lat:         lat,
+        lng:         lng,
+        distance:    parseFloat(finalDistance).toFixed(1),
+        earnings:    (finalEarnings !== null ? finalEarnings : 0).toFixed(2),
+        origin:      origin || '',
+        destination: finalDestination,
+        timer:       timer || 0,
+        timestamp:   new Date(),
+        status:      'pending',
+        source:      'real',
+        rawTitle:    title,
+        rawText:     text
+    };
+
+    if (activePlatforms[detectedPlatform]) {
+        activePlatforms[detectedPlatform].rides.push(newRide);
+        console.log('CORRIDA REAL: ' + detectedPlatform + ' R$' + newRide.earnings + ' ' + finalDistance + 'km');
+        res.json({ success: true, ride: newRide });
+    } else {
+        res.json({ success: false, reason: 'Plataforma desabilitada' });
+    }
 });
 
-// Corridas — expira automaticamente
 app.get('/api/rides', function(req, res) {
-    var now = Date.now();
-    var all = [];
-    Object.keys(activePlatforms).forEach(function(p) {
-        if (!activePlatforms[p].enabled) return;
-        activePlatforms[p].rides.forEach(function(ride) {
+    var allRides = [];
+    Object.keys(activePlatforms).forEach(function(platform) {
+        if (!activePlatforms[platform].enabled) return;
+        activePlatforms[platform].rides.forEach(function(ride) {
             if (ride.status !== 'pending') return;
-            if (ride.expiresAt && new Date(ride.expiresAt).getTime() < now) {
-                ride.status = 'expired';
-                console.log('[EXPIRADA]', ride.id);
-                return;
-            }
-            all.push(Object.assign({}, ride, { platform: p }));
+            var r = Object.assign({}, ride);
+            r.platform = platform;
+            allRides.push(r);
         });
     });
-    all.sort(function(a, b) {
+    allRides.sort(function(a, b) {
         return parseFloat(b.earnings) - parseFloat(a.earnings);
     });
-    res.json(all);
+    console.log('GET /api/rides: ' + allRides.length + ' corridas');
+    res.json(allRides);
 });
 
 app.post('/api/accept-ride', function(req, res) {
     var rideId   = req.body.rideId;
     var platform = req.body.platform;
     if (!activePlatforms[platform]) return res.json({ success: false });
-
-    var ride = activePlatforms[platform].rides.find(function(r) {
-        return r.id === rideId;
-    });
-    if (!ride) return res.json({ success: false, reason: 'Nao encontrada' });
-
-    if (ride.expiresAt && new Date(ride.expiresAt).getTime() < Date.now()) {
-        ride.status = 'expired';
-        return res.json({ success: false, reason: 'Oferta expirada' });
+    var ride = null;
+    for (var i = 0; i < activePlatforms[platform].rides.length; i++) {
+        if (activePlatforms[platform].rides[i].id === rideId) {
+            ride = activePlatforms[platform].rides[i];
+            break;
+        }
     }
-
-    ride.status = 'accepted';
-    pendingAcceptCommands.push({
-        rideId:      rideId,
-        platform:    platform,
-        packageName: ride.packageName || PACKAGE_NAME[platform] || '',
-        timestamp:   new Date().toISOString(),
-        executed:    false
-    });
-    console.log('[ACEITA]', rideId, platform);
-    res.json({ success: true, isReal: true });
+    if (ride) {
+        ride.status = 'accepted';
+        pendingAcceptCommands.push({
+            rideId: rideId,
+            platform: platform,
+            timestamp: new Date(),
+            executed: false
+        });
+        console.log('Aceita: ' + rideId);
+        res.json({ success: true, isReal: true });
+    } else {
+        res.json({ success: false });
+    }
 });
 
 app.post('/api/reject-ride', function(req, res) {
     var rideId   = req.body.rideId;
     var platform = req.body.platform;
     if (!activePlatforms[platform]) return res.json({ success: false });
-
-    var ride = activePlatforms[platform].rides.find(function(r) {
-        return r.id === rideId;
-    });
-    if (!ride) return res.json({ success: false, reason: 'Nao encontrada' });
-
-    ride.status = 'rejected';
-    console.log('[REJEITADA]', rideId);
-    res.json({ success: true });
+    var ride = null;
+    for (var i = 0; i < activePlatforms[platform].rides.length; i++) {
+        if (activePlatforms[platform].rides[i].id === rideId) {
+            ride = activePlatforms[platform].rides[i];
+            break;
+        }
+    }
+    if (ride) {
+        ride.status = 'rejected';
+        console.log('Rejeitada: ' + rideId);
+        res.json({ success: true });
+    } else {
+        res.json({ success: false });
+    }
 });
 
-// MacroDroid busca comandos
 app.get('/api/pending-commands', function(req, res) {
     var pending = pendingAcceptCommands.filter(function(c) { return !c.executed; });
     pending.forEach(function(c) { c.executed = true; });
@@ -288,52 +216,50 @@ app.get('/api/pending-commands', function(req, res) {
 });
 
 app.post('/api/platform/:platform/toggle', function(req, res) {
-    var p = req.params.platform;
-    if (!activePlatforms[p]) return res.json({ success: false });
-    activePlatforms[p].enabled = !activePlatforms[p].enabled;
-    console.log('[TOGGLE]', p, activePlatforms[p].enabled ? 'ON' : 'OFF');
-    res.json({ success: true, enabled: activePlatforms[p].enabled });
+    var platform = req.params.platform;
+    if (activePlatforms[platform]) {
+        activePlatforms[platform].enabled = !activePlatforms[platform].enabled;
+        console.log(platform + ': ' + (activePlatforms[platform].enabled ? 'ON' : 'OFF'));
+        res.json({ success: true, enabled: activePlatforms[platform].enabled });
+    } else {
+        res.json({ success: false });
+    }
 });
 
 app.get('/api/stats', function(req, res) {
     var stats = {};
-    Object.keys(activePlatforms).forEach(function(p) {
-        var rides = activePlatforms[p].rides;
-        stats[p] = {
-            total:    rides.length,
-            pending:  rides.filter(function(r){ return r.status==='pending';  }).length,
-            accepted: rides.filter(function(r){ return r.status==='accepted'; }).length,
-            rejected: rides.filter(function(r){ return r.status==='rejected'; }).length,
-            expired:  rides.filter(function(r){ return r.status==='expired';  }).length
-        };
+    Object.keys(activePlatforms).forEach(function(platform) {
+        var rides = activePlatforms[platform].rides;
+        var p=0,a=0,r=0;
+        for (var i=0;i<rides.length;i++){
+            if(rides[i].status==='pending')  p++;
+            if(rides[i].status==='accepted') a++;
+            if(rides[i].status==='rejected') r++;
+        }
+        stats[platform]={total:rides.length,pending:p,accepted:a,rejected:r};
     });
     res.json(stats);
 });
 
-// Limpeza 5min
 setInterval(function() {
-    var cutoff = Date.now() - (5 * 60 * 1000);
-    Object.keys(activePlatforms).forEach(function(p) {
-        var before = activePlatforms[p].rides.length;
-        activePlatforms[p].rides = activePlatforms[p].rides.filter(function(r) {
-            if (r.status === 'pending') return true;
-            return new Date(r.timestamp).getTime() > cutoff;
+    var cutoff = Date.now() - (10 * 60 * 1000);
+    Object.keys(activePlatforms).forEach(function(platform) {
+        activePlatforms[platform].rides = activePlatforms[platform].rides.filter(function(r) {
+            return r.status === 'pending' || new Date(r.timestamp).getTime() > cutoff;
         });
-        var rm = before - activePlatforms[p].rides.length;
-        if (rm > 0) console.log('[LIMPEZA]', p, rm, 'removidas');
     });
-    var cc = Date.now() - 30000;
     pendingAcceptCommands = pendingAcceptCommands.filter(function(c) {
-        return new Date(c.timestamp).getTime() > cc;
+        return new Date(c.timestamp).getTime() > (Date.now() - 30000);
     });
-    console.log('[LIMPEZA] OK:', new Date().toLocaleTimeString('pt-BR'));
-}, 300000);
+    console.log('Limpeza: ' + new Date().toLocaleTimeString('pt-BR'));
+}, 600000);
 
 var PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', function() {
-    console.log('╔══════════════════════════════════════╗');
-    console.log('║   DeliveryHub v3.0 — ONLINE          ║');
-    console.log('║   Porta: ' + PORT + '                        ║');
-    console.log('║   Oferta com timer real do app       ║');
-    console.log('╚══════════════════════════════════════╝');
+app.listen(PORT, function() {
+    console.log('=====================================');
+    console.log('DeliveryHub porta: ' + PORT);
+    console.log('MODO: SOMENTE CORRIDAS REAIS');
+    console.log('SEM SIMULADOR');
+    console.log('POST /api/notification ATIVO');
+    console.log('=====================================');
 });
